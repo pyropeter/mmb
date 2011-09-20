@@ -15,7 +15,7 @@
 
 typedef struct {
 	float x, y, z;
-	float ax, ay; // angle relative to the x- or y-axis
+	float dx, dy, dz;
 } Camera;
 
 typedef char Block;
@@ -28,6 +28,7 @@ typedef struct {
 static int window;
 static Camera camera;
 static World world;
+static int mouseX, mouseY, mouseSens;
 
 void blockDraw(Block block, int x, int y, int z) {
 	if (block == ' ')
@@ -36,7 +37,46 @@ void blockDraw(Block block, int x, int y, int z) {
 	glPushMatrix();
 	
 	glTranslatef((float)x, (float)y, (float)z);
-	glutSolidCube(1);
+	//glutSolidCube(1);
+
+	glBegin(GL_QUADS); {
+		glNormal3f(-1,0,0);
+		glVertex3f(0,0,0);
+		glVertex3f(0,0,1);
+		glVertex3f(0,1,1);
+		glVertex3f(0,1,0);
+
+		glNormal3f(0,-1,0);
+		glVertex3f(0,0,0);
+		glVertex3f(0,0,1);
+		glVertex3f(1,0,1);
+		glVertex3f(1,0,0);
+
+		glNormal3f(0,0,-1);
+		glVertex3f(0,0,0);
+		glVertex3f(0,1,0);
+		glVertex3f(1,1,0);
+		glVertex3f(1,0,0);
+
+		glNormal3f(0,1,0);
+		glVertex3f(0,1,0);
+		glVertex3f(0,1,1);
+		glVertex3f(1,1,1);
+		glVertex3f(1,1,0);
+
+		glNormal3f(1,0,0);
+		glVertex3f(1,0,0);
+		glVertex3f(1,0,1);
+		glVertex3f(1,1,1);
+		glVertex3f(1,1,0);
+
+		glNormal3f(0,1,1);
+		glVertex3f(0,0,1);
+		glVertex3f(0,1,1);
+		glVertex3f(1,1,1);
+		glVertex3f(1,0,1);
+
+	}; glEnd();
 	
 	glPopMatrix();
 }
@@ -99,17 +139,35 @@ void draw() {
 	glLoadIdentity();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glTranslatef(camera.x, camera.y, camera.z);
-	glRotatef(-camera.ax, 0, 1, 0);
-	glRotatef(-camera.ay, cosf(RAD(camera.ax)), 0, -sinf(RAD(camera.ax)));
+	//glTranslatef(camera.x, camera.y, camera.z);
+	//glRotatef(-camera.ax, 0, 1, 0);
+	//glRotatef(-camera.ay, cosf(RAD(camera.ax)), 0, -sinf(RAD(camera.ax)));
+
+	//gluLookAt(camera.x, camera.y, camera.z,  0,0,0,  0,1,0);
+	//gluLookAt(camera.x, camera.y, camera.z,
+	//		camera.x + sinf(camera.ay) * sinf(camera.ax),
+	//		camera.y + cosf(camera.ay) * sinf(camera.ax),
+	//		camera.z + cosf(camera.ax),
+	//		0,1,0);
+	gluLookAt(camera.x, camera.y, camera.z,
+			camera.x + camera.dx,
+			camera.y + camera.dy,
+			camera.z + camera.dz,
+			0,1,0);
 
 	GLfloat ambientColor[] = {1, 1, 1, 1};
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambientColor);
 
 	GLfloat lightColor[] = {1, 1, 1, 1};
-	GLfloat lightPosition[] = {50, 40, 20, 1};
+	GLfloat lightPosition[] = {-1.5, -1, -0.5, 0};
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, lightColor);
 	glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
+
+	glBegin(GL_LINES); {
+		glVertex3f(lightPosition[0], lightPosition[1],
+				lightPosition[2]);
+		glVertex3f(0,0,0);
+	}; glEnd();
 
 	//glutSolidTeapot(1);
 	worldDraw(&world);
@@ -118,22 +176,39 @@ void draw() {
 }
 
 void onkeydown(unsigned char key, int x, int y) {
-	if (key == 'q') {
-		glutLeaveMainLoop();
-	} else if (key == 'w') {
-		camera.y -= 0.1;
-	} else if (key == 's') {
-		camera.y += 0.1;
-	} else if (key == 'a') {
-		camera.x += 0.1;
-	} else if (key == 'd') {
-		camera.x -= 0.1;
-	} else if (key == 'i') {
-		printf("Camera: %1.1f/%1.1f/%1.1f %5.3f/%5.3f\n",
-				camera.x, camera.y, camera.z,
-				camera.ax, camera.ay);
-		printf("World: %ix%ix%i\n",
-				world.sizeX, world.sizeY, world.sizeZ);
+	switch (key) {
+		case 'w':
+			camera.x += camera.dx;
+			camera.y += camera.dy;
+			camera.z += camera.dz;
+			break;
+		case 's':
+			camera.x -= camera.dx;
+			camera.y -= camera.dy;
+			camera.z -= camera.dz;
+			break;
+		case 'a':
+			camera.x += camera.dz;
+			camera.z -= camera.dx;
+			break;
+		case 'd':
+			camera.x -= camera.dz;
+			camera.z += camera.dx;
+			break;
+
+		case 'q':
+			glutLeaveMainLoop();
+			break;
+		case 'i':
+			printf("Camera: %1.1f/%1.1f/%1.1f %1.1f/%1.1f/%1.1f\n",
+					camera.x, camera.y, camera.z,
+					camera.dx, camera.dy, camera.dz);
+			printf("World: %ix%ix%i\n",
+					world.sizeX, world.sizeY, world.sizeZ);
+			break;
+		default:
+			printf("No mapping for key %i\n", key);
+			break;
 	}
 	glutPostRedisplay();
 }
@@ -149,9 +224,32 @@ void onmouse(int button, int state, int x, int y) {
 }
 
 void onmotion(int x, int y) {
-	//paused = 1;
-	camera.ax = (int)((double)-x / glutGet(GLUT_WINDOW_WIDTH) * 360 - 180);
-	camera.ay = (int)((double)-y / glutGet(GLUT_WINDOW_HEIGHT) * 360 - 180);
+	float ax = (float) -y / glutGet(GLUT_WINDOW_WIDTH) * PI;
+	float ay = (float) -x / glutGet(GLUT_WINDOW_HEIGHT) * PI * 2;
+	camera.dx = sinf(ax) * sinf(ay);
+	camera.dy = cosf(ax);
+	camera.dz = sinf(ax) * cosf(ay);
+	glutPostRedisplay();
+}
+
+void onpassivemotion(int x, int y) {
+	int cx = glutGet(GLUT_WINDOW_WIDTH)/2;
+	int cy = glutGet(GLUT_WINDOW_HEIGHT)/2;
+	if (x - cx == 0 && y -cy == 0)
+		return;
+
+	mouseX = ( mouseX + x - cx ) % mouseSens;
+	mouseY += y - cy;
+	if (mouseY > mouseSens) mouseY = mouseSens;
+	if (mouseY < 0) mouseY = 0;
+
+	float ax = (float) -mouseY / mouseSens * PI;
+	float ay = (float) -mouseX / mouseSens * PI * 2;
+	camera.dx = sinf(ax) * sinf(ay);
+	camera.dy = cosf(ax);
+	camera.dz = sinf(ax) * cosf(ay);
+
+	glutWarpPointer(cx, cy);
 	glutPostRedisplay();
 }
 
@@ -161,7 +259,7 @@ void onreshape(int w, int h) {
     glLoadIdentity();
     gluPerspective(45.0,		  //The camera angle
 		   (double)w / (double)h, //The width-to-height ratio
-		   0.01,		   //The near z clipping coordinate
+		   1.0,		   //The near z clipping coordinate
 		   200.0);		//The far z clipping coordinate
 }
 
@@ -170,7 +268,7 @@ int main(int argc, char *argv[]) {
 	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE,
 			GLUT_ACTION_CONTINUE_EXECUTION);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
-	glutInitWindowSize(800, 600);
+	glutInitWindowSize(400, 400);
 	window = glutCreateWindow("Mmb 0.0.1 [Burma Remix]");
 
 	glEnable(GL_DEPTH_TEST);
@@ -184,19 +282,21 @@ int main(int argc, char *argv[]) {
 	glBlendFunc (GL_SRC_ALPHA_SATURATE, GL_ONE);*/
 
 	memset(&camera, 0, sizeof(Camera));
-	camera.x = -1;
-	camera.y = -11;
-	camera.z = -16;
-	camera.ax = -490;
-	camera.ay = -375;
+	camera.y = 10;
+	camera.dx = 0.6;
+	camera.dy = -0.4;
+	camera.dz = 0.7;
+	mouseX = mouseY = 0;
+	mouseSens = 500;
 	
-	if (worldInit(&world, 50, 10, 50) != 0)
+	if (worldInit(&world, 30, 8, 30) != 0)
 		return EXIT_FAILURE;
 
 	glutDisplayFunc(&draw);
 	glutKeyboardFunc(&onkeydown);
-	glutMouseFunc(&onmouse);
-	glutMotionFunc(&onmotion);
+	//glutMouseFunc(&onmouse);
+	//glutMotionFunc(&onmotion);
+	glutPassiveMotionFunc(&onpassivemotion);
 	glutReshapeFunc(&onreshape);
 
 	glutMainLoop();
