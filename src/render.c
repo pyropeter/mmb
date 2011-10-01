@@ -115,6 +115,12 @@ void onKeyboard(unsigned char key, int x, int y) {
 		case 'd':
 			moveCamera(-render.camera.dz, 0, render.camera.dx);
 			break;
+		case ' ':
+			moveCamera(0, 0.5, 0);
+			break;
+		case '<':
+			moveCamera(0, -0.5, 0);
+			break;
 
 		case 27: // ESC
 			freePointer();
