@@ -3,13 +3,14 @@ typedef struct {
 	float x, y, z;
 	int ix, iy, iz;
 	float dx, dy, dz;
+	float ax, ay;
 } Camera;
 
 typedef struct {
 	int window;
 	int mouseX;
 	int mouseY;
-	int mouseSens;
+	float mouseSens;
 	Camera camera;
 	int (*onDraw)(void *data);
 	void *onDrawData;

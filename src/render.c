@@ -31,6 +31,25 @@ void moveCamera(float dx, float dy, float dz) {
 	render.camera.iz = (int)floor(render.camera.z);
 }
 
+void rotateCamera(float dax, float day) {
+	/* 
+	 * Adds dax and day to the current camera rotation.
+	 * 
+	 * Attention: The rotation relative to the X-axis cannot be raised over
+	 * PI and not be lowered below zero.
+	 * 
+	 * */
+
+	render.camera.ax += dax;
+	if (render.camera.ax < 0.1) render.camera.ax = 0.15;
+	if (render.camera.ax > 3.1) render.camera.ax = 3.05;
+	render.camera.ay = fmodf(render.camera.ay + day, M_PI * 2);
+
+	render.camera.dx = sinf(render.camera.ax) * sinf(render.camera.ay);
+	render.camera.dy = cosf(render.camera.ax);
+	render.camera.dz = sinf(render.camera.ax) * cosf(render.camera.ay);
+}
+
 void renderDebug() {
 	printf("===== RENDER DEBUG =====\n");
 	printf("Camera: %1.1f/%1.1f/%1.1f %1.1f/%1.1f/%1.1f %i/%i/%i\n",
@@ -41,6 +60,33 @@ void renderDebug() {
 	printf("===== END =====\n");
 }
 
+void onPassiveMotion(int x, int y) {
+	int cx = glutGet(GLUT_WINDOW_WIDTH) / 2;
+	int cy = glutGet(GLUT_WINDOW_HEIGHT) / 2;
+	int dx = x - cx;
+	int dy = y - cy;
+	if (dx == 0 && dy == 0)
+		return;
+	
+	float ax = dy * render.mouseSens * M_PI;
+	float ay = dx * render.mouseSens * M_PI * 2;
+	rotateCamera(ax, -ay);
+
+	glutWarpPointer(cx, cy);
+	glutPostRedisplay();
+}
+
+void catchPointer() {
+	int cx = glutGet(GLUT_WINDOW_WIDTH) / 2;
+	int cy = glutGet(GLUT_WINDOW_HEIGHT) / 2;
+	glutWarpPointer(cx, cy);
+	glutPassiveMotionFunc(&onPassiveMotion);
+}
+
+void freePointer() {
+	glutPassiveMotionFunc(NULL);
+}
+
 void onReshape(int w, int h) {
 	glViewport(0, 0, w, h);
 	glMatrixMode(GL_PROJECTION);
@@ -49,27 +95,6 @@ void onReshape(int w, int h) {
 			(double)w / (double)h,	//The width-to-height ratio
 			1.0,			//The near z clipping coordinate
 			200.0);			//The far z clipping coordinate
-}
-
-void onPassiveMotion(int x, int y) {
-	int cx = glutGet(GLUT_WINDOW_WIDTH)/2;
-	int cy = glutGet(GLUT_WINDOW_HEIGHT)/2;
-	if (x - cx == 0 && y - cy == 0)
-		return;
-
-	render.mouseX = ( render.mouseX + x - cx ) % render.mouseSens;
-	render.mouseY += y - cy;
-	if (render.mouseY > render.mouseSens) render.mouseY = render.mouseSens;
-	if (render.mouseY < 0) render.mouseY = 0;
-
-	float ax = (float) -render.mouseY / render.mouseSens * M_PI;
-	float ay = (float) -render.mouseX / render.mouseSens * M_PI * 2;
-	render.camera.dx = sinf(ax) * sinf(ay);
-	render.camera.dy = cosf(ax);
-	render.camera.dz = sinf(ax) * cosf(ay);
-
-	glutWarpPointer(cx, cy);
-	glutPostRedisplay();
 }
 
 void onKeyboard(unsigned char key, int x, int y) {
@@ -89,6 +114,10 @@ void onKeyboard(unsigned char key, int x, int y) {
 			moveCamera(-render.camera.dz, 0, render.camera.dx);
 			break;
 
+		case 27: // ESC
+			freePointer();
+			break;
+
 		case 'q':
 			glutLeaveMainLoop();
 			break;
@@ -100,6 +129,12 @@ void onKeyboard(unsigned char key, int x, int y) {
 			break;
 	}
 	glutPostRedisplay();
+}
+
+void onMouse(int button, int state, int x, int y) {
+	if (state == GLUT_UP && button == GLUT_LEFT_BUTTON) {
+		catchPointer();
+	}
 }
 
 void onDisplay() {
@@ -138,12 +173,10 @@ Render *renderInit(int argc, char *argv[]) {
 	render.onDraw = NULL;
 	render.onDrawData = NULL;
 
-	render.mouseSens = 500;
+	render.mouseSens = 1.0/1000;
 
 	moveCamera(0, 10, 0);
-	render.camera.dx = 0.6;
-	render.camera.dy = -0.4;
-	render.camera.dz = 0.7;
+	rotateCamera(0.5, 1.0);
 
 
 	glutInit(&argc, argv);
@@ -159,8 +192,8 @@ Render *renderInit(int argc, char *argv[]) {
 	glEnable(GL_LIGHT1);
 
 	glutReshapeFunc(&onReshape);
-	glutPassiveMotionFunc(&onPassiveMotion);
 	glutKeyboardFunc(&onKeyboard);
+	glutMouseFunc(&onMouse);
 	glutDisplayFunc(&onDisplay);
 
 	return &render;
