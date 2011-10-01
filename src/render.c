@@ -77,6 +77,7 @@ void onPassiveMotion(int x, int y) {
 }
 
 void catchPointer() {
+	glutSetCursor(GLUT_CURSOR_NONE);
 	int cx = glutGet(GLUT_WINDOW_WIDTH) / 2;
 	int cy = glutGet(GLUT_WINDOW_HEIGHT) / 2;
 	glutWarpPointer(cx, cy);
@@ -84,6 +85,7 @@ void catchPointer() {
 }
 
 void freePointer() {
+	glutSetCursor(GLUT_CURSOR_INHERIT);
 	glutPassiveMotionFunc(NULL);
 }
 
