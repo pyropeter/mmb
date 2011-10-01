@@ -15,6 +15,7 @@
 
 typedef struct {
 	float x, y, z;
+	int ix, iy, iz;
 	float dx, dy, dz;
 } Camera;
 
@@ -25,19 +26,52 @@ typedef struct {
 	int foo;
 } World;
 
+struct Drawlistitem_ {
+	Block *block;
+	int x, y, z;
+	int distX, distY, distZ;
+	int distance;
+	struct Drawlistitem_ *next;
+};
+typedef struct Drawlistitem_ Drawlistitem;
+
 static int window;
 static Camera camera;
 static World world;
 static int mouseX, mouseY, mouseSens;
+static int vertices;
+static Drawlistitem *drawlist;
 
-void blockDraw(Block block, int x, int y, int z) {
-	if (block == ' ')
+void pushDrawlist(Block *block, int x, int y, int z) {
+	Drawlistitem *item = malloc(sizeof(Drawlistitem));
+	item->block = block;
+	item->x = x;
+	item->y = y;
+	item->z = z;
+	item->distX = x - camera.ix;
+	item->distY = y - camera.iy;
+	item->distZ = z - camera.iz;
+	item->distance = pow(item->distX, 2)
+			+ pow(item->distY, 2) + pow(item->distZ, 2);
+
+	Drawlistitem **prev = &drawlist;
+	while (*prev) {
+		if ((*prev)->distance < item->distance)
+			break;
+		prev = &((*prev)->next);
+	}
+
+	item->next = *prev;
+	*prev = item;
+}
+
+void blockDraw(Block *block, int x, int y, int z) {
+	if (*block == ' ')
 		return;
 	
 	glPushMatrix();
 	
 	glTranslatef((float)x, (float)y, (float)z);
-	//glutSolidCube(1);
 
 	glBegin(GL_QUADS); {
 		glNormal3f(-1,0,0);
@@ -45,37 +79,109 @@ void blockDraw(Block block, int x, int y, int z) {
 		glVertex3f(0,0,1);
 		glVertex3f(0,1,1);
 		glVertex3f(0,1,0);
+		vertices += 4;
 
 		glNormal3f(0,-1,0);
 		glVertex3f(0,0,0);
 		glVertex3f(0,0,1);
 		glVertex3f(1,0,1);
 		glVertex3f(1,0,0);
+		vertices += 4;
 
 		glNormal3f(0,0,-1);
 		glVertex3f(0,0,0);
 		glVertex3f(0,1,0);
 		glVertex3f(1,1,0);
 		glVertex3f(1,0,0);
+		vertices += 4;
 
 		glNormal3f(0,1,0);
 		glVertex3f(0,1,0);
 		glVertex3f(0,1,1);
 		glVertex3f(1,1,1);
 		glVertex3f(1,1,0);
+		vertices += 4;
 
 		glNormal3f(1,0,0);
 		glVertex3f(1,0,0);
 		glVertex3f(1,0,1);
 		glVertex3f(1,1,1);
 		glVertex3f(1,1,0);
+		vertices += 4;
 
 		glNormal3f(0,1,1);
 		glVertex3f(0,0,1);
 		glVertex3f(0,1,1);
 		glVertex3f(1,1,1);
 		glVertex3f(1,0,1);
+		vertices += 4;
+	}; glEnd();
+	
+	glPopMatrix();
+}
 
+void blockDrawFromList(Drawlistitem *item) {
+	if (*(item->block) == ' ')
+		return;
+	
+	glPushMatrix();
+	
+	glTranslatef((float)item->x, (float)item->y, (float)item->z);
+
+	glBegin(GL_QUADS); {
+		if (item->distX > 0) {
+			glNormal3f(-1,0,0);
+			glVertex3f(0,0,0);
+			glVertex3f(0,0,1);
+			glVertex3f(0,1,1);
+			glVertex3f(0,1,0);
+			vertices += 4;
+		}
+
+		if (item->distY > 0) {
+			glNormal3f(0,-1,0);
+			glVertex3f(0,0,0);
+			glVertex3f(0,0,1);
+			glVertex3f(1,0,1);
+			glVertex3f(1,0,0);
+			vertices += 4;
+		}
+
+		if (item->distZ > 0) {
+			glNormal3f(0,0,-1);
+			glVertex3f(0,0,0);
+			glVertex3f(0,1,0);
+			glVertex3f(1,1,0);
+			glVertex3f(1,0,0);
+			vertices += 4;
+		}
+
+		if (item->distX < 0) {
+			glNormal3f(1,0,0);
+			glVertex3f(1,0,0);
+			glVertex3f(1,0,1);
+			glVertex3f(1,1,1);
+			glVertex3f(1,1,0);
+			vertices += 4;
+		}
+
+		if (item->distY < 0) {
+			glNormal3f(0,1,0);
+			glVertex3f(0,1,0);
+			glVertex3f(0,1,1);
+			glVertex3f(1,1,1);
+			glVertex3f(1,1,0);
+			vertices += 4;
+		}
+
+		if (item->distZ < 0) {
+			glNormal3f(0,0,1);
+			glVertex3f(0,0,1);
+			glVertex3f(0,1,1);
+			glVertex3f(1,1,1);
+			glVertex3f(1,0,1);
+			vertices += 4;
+		}
 	}; glEnd();
 	
 	glPopMatrix();
@@ -103,7 +209,9 @@ int worldInit(World *world, int sizeX, int sizeY, int sizeZ) {
 				return -1;
 			memset(world->data[x][z], ' ', sizeY * sizeof(Block));
 			
-			height = (int)(sin(x/6.0)*cos(z/8.0)*(sizeY-2)+sizeY)/2;
+			height = (int)(
+					sin(x/6.0) * cos(z/8.0)
+					* (sizeY-1) + sizeY ) / 2 + 1;
 			memset(world->data[x][z], 's', height * sizeof(Block));
 		}
 	}
@@ -124,13 +232,31 @@ int worldFree(World *world) {
 }
 
 void worldDraw(World *world) {
+	vertices = 0;
+
+	drawlist = NULL;
+	camera.ix = (int)floor(camera.x);
+	camera.iy = (int)floor(camera.y);
+	camera.iz = (int)floor(camera.z);
+
 	int x, y, z;
 	for (x = 0; x < world->sizeX; x++) {
 		for (y = 0; y < world->sizeY; y++) {
 			for (z = 0; z < world->sizeZ; z++) {
-				blockDraw(world->data[x][z][y], x, y, z);
+				//blockDraw(&(world->data[x][z][y]), x, y, z);
+				pushDrawlist(&(world->data[x][z][y]), x, y, z);
 			}
 		}
+	}
+
+	Drawlistitem *next;
+	while (drawlist) {
+		//blockDraw(drawlist->block,
+		//		drawlist->x, drawlist->y, drawlist->z);
+		blockDrawFromList(drawlist);
+		next = drawlist->next;
+		free(drawlist);
+		drawlist = next;
 	}
 }
 
@@ -139,16 +265,6 @@ void draw() {
 	glLoadIdentity();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	//glTranslatef(camera.x, camera.y, camera.z);
-	//glRotatef(-camera.ax, 0, 1, 0);
-	//glRotatef(-camera.ay, cosf(RAD(camera.ax)), 0, -sinf(RAD(camera.ax)));
-
-	//gluLookAt(camera.x, camera.y, camera.z,  0,0,0,  0,1,0);
-	//gluLookAt(camera.x, camera.y, camera.z,
-	//		camera.x + sinf(camera.ay) * sinf(camera.ax),
-	//		camera.y + cosf(camera.ay) * sinf(camera.ax),
-	//		camera.z + cosf(camera.ax),
-	//		0,1,0);
 	gluLookAt(camera.x, camera.y, camera.z,
 			camera.x + camera.dx,
 			camera.y + camera.dy,
@@ -158,18 +274,22 @@ void draw() {
 	GLfloat ambientColor[] = {1, 1, 1, 1};
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambientColor);
 
-	GLfloat lightColor[] = {1, 1, 1, 1};
-	GLfloat lightPosition[] = {-1.5, -1, -0.5, 0};
+	GLfloat lightColor[] = {0.5, 0.5, 1, 1};
+	GLfloat lightPosition[] = {0, 1, 0, 0};
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, lightColor);
 	glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
 
-	glBegin(GL_LINES); {
+	GLfloat lightColor1[] = {1, 0, 0, 1};
+	GLfloat lightPosition1[] = {-1, 1, 0, 0};
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, lightColor1);
+	glLightfv(GL_LIGHT1, GL_POSITION, lightPosition1);
+
+	/* glBegin(GL_LINES); {
 		glVertex3f(lightPosition[0], lightPosition[1],
 				lightPosition[2]);
 		glVertex3f(0,0,0);
-	}; glEnd();
+	}; glEnd(); */
 
-	//glutSolidTeapot(1);
 	worldDraw(&world);
 
 	glutSwapBuffers();
@@ -200,11 +320,16 @@ void onkeydown(unsigned char key, int x, int y) {
 			glutLeaveMainLoop();
 			break;
 		case 'i':
-			printf("Camera: %1.1f/%1.1f/%1.1f %1.1f/%1.1f/%1.1f\n",
-					camera.x, camera.y, camera.z,
-					camera.dx, camera.dy, camera.dz);
+			printf("===== DEBUG =====\n");
+			printf("Camera: %1.1f/%1.1f/%1.1f %1.1f/%1.1f/%1.1f "\
+					"%i/%i/%i\n",
+					camera.x,  camera.y,  camera.z,
+					camera.dx, camera.dy, camera.dz,
+					camera.ix, camera.iy, camera.iz);
 			printf("World: %ix%ix%i\n",
 					world.sizeX, world.sizeY, world.sizeZ);
+			printf("Vertices drawn: %i\n", vertices);
+			printf("===== END =====\n");
 			break;
 		default:
 			printf("No mapping for key %i\n", key);
@@ -267,19 +392,22 @@ int main(int argc, char *argv[]) {
 	glutInit(&argc, argv);
 	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE,
 			GLUT_ACTION_CONTINUE_EXECUTION);
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_ALPHA);
+	//		| GLUT_MULTISAMPLE);
 	glutInitWindowSize(400, 400);
-	window = glutCreateWindow("Mmb 0.0.1 [Burma Remix]");
+	window = glutCreateWindow("Mmb 0.0.2 [Burma Remix]");
 
-	glEnable(GL_DEPTH_TEST);
+	//glEnable(GL_DEPTH_TEST);
+	//glEnable(GL_MULTISAMPLE);
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
+	glEnable(GL_LIGHT1);
 	
-	/*glCullFace (GL_BACK);
-	glEnable (GL_CULL_FACE);
+	//glCullFace (GL_BACK);
+	//glEnable (GL_CULL_FACE);
 	glEnable (GL_BLEND);
 	glEnable (GL_POLYGON_SMOOTH);
-	glBlendFunc (GL_SRC_ALPHA_SATURATE, GL_ONE);*/
+	glBlendFunc (GL_SRC_ALPHA_SATURATE, GL_ONE);
 
 	memset(&camera, 0, sizeof(Camera));
 	camera.y = 10;
@@ -289,7 +417,7 @@ int main(int argc, char *argv[]) {
 	mouseX = mouseY = 0;
 	mouseSens = 500;
 	
-	if (worldInit(&world, 30, 8, 30) != 0)
+	if (worldInit(&world, 10, 5, 10) != 0)
 		return EXIT_FAILURE;
 
 	glutDisplayFunc(&draw);
