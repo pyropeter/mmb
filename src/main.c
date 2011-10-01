@@ -190,7 +190,7 @@ int main(int argc, char *argv[]) {
 	if (worldInit(&world, 10, 5, 10) != 0)
 		return EXIT_FAILURE;
 	
-	renderHookDraw(&worldDraw, &world);
+	renderHookDraw((int (*)(void *))&worldDraw, &world);
 	renderRun();
 	return EXIT_SUCCESS;
 }
