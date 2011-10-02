@@ -3,29 +3,30 @@
  * 
  * */
 
+#include <stdio.h>
 #include <math.h>
 #include "generator.h"
 
 static char *blocks = " s";
 
-#define TRIG_TABLE_SIZE 64
-static int sinTable[TRIG_TABLE_SIZE];
-static int cosTable[TRIG_TABLE_SIZE];
-static int sinScale = TRIG_TABLE_SIZE / 6;
-static int cosScale = TRIG_TABLE_SIZE / 8;
+#define TRIG_TABLE_SIZE 64L
+static long long int sinTable[TRIG_TABLE_SIZE];
+static long long int cosTable[TRIG_TABLE_SIZE];
 
 void generatorInit() {
 	float scale = M_PI * 2 / TRIG_TABLE_SIZE;
 	int i;
-	for (i = 0; i < TRIG_TABLE_SIZE) {
+	for (i = 0; i < TRIG_TABLE_SIZE; i++) {
 		sinTable[i] = (int)(65536 * sin(i * scale));
 		cosTable[i] = (int)(65536 * cos(i * scale));
 	}
 	return;
 }
 
-Block *generatorGetBlock(int x, int y, int z) {
-	int height = (sinTable[x * sinScale] * cosTable[z * cosScale]) >> 24;
+Block *generatorGetBlock(Comp x, Comp y, Comp z) {
+	Comp height = ((sinTable[(x * TRIG_TABLE_SIZE / 20) % TRIG_TABLE_SIZE]
+			* cosTable[(z * TRIG_TABLE_SIZE / 30) % TRIG_TABLE_SIZE])
+			/ 1000000000) + HALFCOMP;
 	
 	if (height <= y)
 		return blocks;

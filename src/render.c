@@ -22,13 +22,13 @@ static Render render;
 
 // =====================================================================
 
-void moveCamera(float dx, float dy, float dz) {
+void moveCamera(double dx, double dy, double dz) {
 	render.camera.x += dx;
 	render.camera.y += dy;
 	render.camera.z += dz;
-	render.camera.ix = (int)floor(render.camera.x);
-	render.camera.iy = (int)floor(render.camera.y);
-	render.camera.iz = (int)floor(render.camera.z);
+	render.camera.ix = (Comp)floor(render.camera.x);
+	render.camera.iy = (Comp)floor(render.camera.y);
+	render.camera.iz = (Comp)floor(render.camera.z);
 }
 
 void rotateCamera(float dax, float day) {
@@ -52,10 +52,14 @@ void rotateCamera(float dax, float day) {
 
 void renderDebug() {
 	printf("===== RENDER DEBUG =====\n");
-	printf("Camera: %1.1f/%1.1f/%1.1f %1.1f/%1.1f/%1.1f %i/%i/%i\n",
-			render.camera.x,  render.camera.y,  render.camera.z,
+	printf("Camera: %1.1f/%1.1f/%1.1f %1.1f/%1.1f/%1.1f %li/%li/%li\n",
+			render.camera.x - HALFCOMP,
+			render.camera.y - HALFCOMP,
+			render.camera.z - HALFCOMP,
 			render.camera.dx, render.camera.dy, render.camera.dz,
-			render.camera.ix, render.camera.iy, render.camera.iz);
+			render.camera.ix - HALFCOMP,
+			render.camera.iy - HALFCOMP,
+			render.camera.iz - HALFCOMP);
 	printf("Vertices drawn: %i\n", render.vertices);
 	printf("===== END =====\n");
 }
@@ -102,12 +106,10 @@ void onReshape(int w, int h) {
 void onKeyboard(unsigned char key, int x, int y) {
 	switch (key) {
 		case 'w':
-			moveCamera(render.camera.dx, render.camera.dy,
-					render.camera.dz);
+			moveCamera(render.camera.dx, 0, render.camera.dz);
 			break;
 		case 's':
-			moveCamera(-render.camera.dx, -render.camera.dy,
-					-render.camera.dz);
+			moveCamera(-render.camera.dx, 0, -render.camera.dz);
 			break;
 		case 'a':
 			moveCamera(render.camera.dz, 0, -render.camera.dx);
@@ -149,11 +151,15 @@ void onDisplay() {
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	
+	double x = render.camera.x - HALFCOMP;
+	double y = render.camera.y - HALFCOMP;
+	double z = render.camera.z - HALFCOMP;
 
-	gluLookAt(render.camera.x, render.camera.y, render.camera.z,
-			render.camera.x + render.camera.dx,
-			render.camera.y + render.camera.dy,
-			render.camera.z + render.camera.dz,
+	gluLookAt(x, y, z,
+			x + render.camera.dx,
+			y + render.camera.dy,
+			z + render.camera.dz,
 			0, 1, 0);
 
 	GLfloat ambientColor[] = {1, 1, 1, 1};
@@ -183,7 +189,7 @@ Render *renderInit(int argc, char *argv[]) {
 
 	render.mouseSens = 1.0/1000;
 
-	moveCamera(0, 10, 0);
+	moveCamera(HALFCOMP, HALFCOMP + 10, HALFCOMP);
 	rotateCamera(0.5, 1.0);
 
 

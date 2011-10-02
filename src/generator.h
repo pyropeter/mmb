@@ -1,5 +1,9 @@
+#ifndef _MMB_GENERATOR_H
+#define _MMB_GENERATOR_H
 
-typedef char Block;
+#include "defs.h"
 
 extern void generatorInit();
-extern Block *generatorGetBlock(int x, int y, int z);
+extern Block *generatorGetBlock(Comp x, Comp y, Comp z);
+
+#endif /* _MMB_GENERATOR_H */

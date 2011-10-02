@@ -1,7 +1,9 @@
 
+#include "defs.h"
+
 typedef struct {
-	float x, y, z;
-	int ix, iy, iz;
+	double x, y, z;
+	Comp ix, iy, iz;
 	float dx, dy, dz;
 	float ax, ay;
 } Camera;

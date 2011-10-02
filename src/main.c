@@ -2,10 +2,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-
-#include "render.h"
 #include <GL/gl.h>
 #include <GL/freeglut.h>
+
+#include "render.h"
+#include "generator.h"
 
 typedef char Block;
 typedef struct {
@@ -51,71 +52,88 @@ void pushDrawlist(Block *block, int x, int y, int z) {
 	*prev = item;
 }
 
-void blockDrawFromList(Drawlistitem *item) {
-	if (*(item->block) == ' ')
+void blockDrawDist(Block *block, Comp x_, Comp y_, Comp z_,
+		int distX, int distY, int distZ) {
+	if (*block == ' ')
 		return;
 	
 	glPushMatrix();
 	
-	glTranslatef((float)item->x, (float)item->y, (float)item->z);
+	int x = (long long int)x_ - HALFCOMP;
+	int y = (long long int)y_ - HALFCOMP;
+	int z = (long long int)z_ - HALFCOMP;
+	
+	//glTranslated((double)x, (double)y, (double)z);
 
 	glBegin(GL_QUADS); {
-		if (item->distX > 0) {
+		if (distX > 0) {
 			glNormal3f(-1,0,0);
-			glVertex3f(0,0,0);
-			glVertex3f(0,0,1);
-			glVertex3f(0,1,1);
-			glVertex3f(0,1,0);
+			glVertex3f(0+x,0+y,0+z);
+			glVertex3f(0+x,0+y,1+z);
+			glVertex3f(0+x,1+y,1+z);
+			glVertex3f(0+x,1+y,0+z);
 			render->vertices += 4;
 		}
 
-		if (item->distY > 0) {
+		if (distY > 0) {
 			glNormal3f(0,-1,0);
-			glVertex3f(0,0,0);
-			glVertex3f(0,0,1);
-			glVertex3f(1,0,1);
-			glVertex3f(1,0,0);
+			glVertex3f(0+x,0+y,0+z);
+			glVertex3f(0+x,0+y,1+z);
+			glVertex3f(1+x,0+y,1+z);
+			glVertex3f(1+x,0+y,0+z);
 			render->vertices += 4;
 		}
 
-		if (item->distZ > 0) {
+		if (distZ > 0) {
 			glNormal3f(0,0,-1);
-			glVertex3f(0,0,0);
-			glVertex3f(0,1,0);
-			glVertex3f(1,1,0);
-			glVertex3f(1,0,0);
+			glVertex3f(0+x,0+y,0+z);
+			glVertex3f(0+x,1+y,0+z);
+			glVertex3f(1+x,1+y,0+z);
+			glVertex3f(1+x,0+y,0+z);
 			render->vertices += 4;
 		}
 
-		if (item->distX < 0) {
+		if (distX < 0) {
 			glNormal3f(1,0,0);
-			glVertex3f(1,0,0);
-			glVertex3f(1,0,1);
-			glVertex3f(1,1,1);
-			glVertex3f(1,1,0);
+			glVertex3f(1+x,0+y,0+z);
+			glVertex3f(1+x,0+y,1+z);
+			glVertex3f(1+x,1+y,1+z);
+			glVertex3f(1+x,1+y,0+z);
 			render->vertices += 4;
 		}
 
-		if (item->distY < 0) {
+		if (distY < 0) {
 			glNormal3f(0,1,0);
-			glVertex3f(0,1,0);
-			glVertex3f(0,1,1);
-			glVertex3f(1,1,1);
-			glVertex3f(1,1,0);
+			glVertex3f(0+x,1+y,0+z);
+			glVertex3f(0+x,1+y,1+z);
+			glVertex3f(1+x,1+y,1+z);
+			glVertex3f(1+x,1+y,0+z);
 			render->vertices += 4;
 		}
 
-		if (item->distZ < 0) {
+		if (distZ < 0) {
 			glNormal3f(0,0,1);
-			glVertex3f(0,0,1);
-			glVertex3f(0,1,1);
-			glVertex3f(1,1,1);
-			glVertex3f(1,0,1);
+			glVertex3f(0+x,0+y,1+z);
+			glVertex3f(0+x,1+y,1+z);
+			glVertex3f(1+x,1+y,1+z);
+			glVertex3f(1+x,0+y,1+z);
 			render->vertices += 4;
 		}
 	}; glEnd();
 	
 	glPopMatrix();
+}
+
+void blockDraw(Block *block, Comp x, Comp y, Comp z) {
+	blockDrawDist(block, x,y,z,
+			(int)x - camera->ix,
+			(int)y - camera->iy,
+			(int)z - camera->iz);
+}
+
+void blockDrawFromList(Drawlistitem *item) {
+	blockDrawDist(item->block, item->x, item->y, item->z,
+			item->distX, item->distY, item->distZ);
 }
 
 int worldInit(World *world, int sizeX, int sizeY, int sizeZ) {
@@ -183,14 +201,28 @@ void worldDraw(World *world) {
 	}
 }
 
+void worldDraw2(void *foo) {
+	int r = 20;
+	Comp x, y, z;
+	for (x = camera->ix - r; x < camera->ix + r; x++) {
+		for (y = camera->iy - r; y < camera->iy + r; y++) {
+			for (z = camera->iz - r; z < camera->iz + r; z++) {
+				blockDraw(generatorGetBlock(x,y,z), x,y,z);
+			}
+		}
+	}
+}
+
 int main(int argc, char *argv[]) {
 	render = renderInit(argc, argv);
 	camera = &(render->camera);
 	
-	if (worldInit(&world, 10, 5, 10) != 0)
-		return EXIT_FAILURE;
+	//if (worldInit(&world, 40, 3, 40) != 0)
+	//	return EXIT_FAILURE;
+	generatorInit();
 	
-	renderHookDraw((int (*)(void *))&worldDraw, &world);
+	//renderHookDraw((int (*)(void *))&worldDraw, &world);
+	renderHookDraw((int (*)(void *))&worldDraw2, NULL);
 	renderRun();
 	return EXIT_SUCCESS;
 }
