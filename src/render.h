@@ -1,3 +1,5 @@
+#ifndef _MMB_RENDER_H
+#define _MMB_RENDER_H
 
 #include "defs.h"
 
@@ -22,3 +24,5 @@ typedef struct {
 extern Render *renderInit(int argc, char *argv[]);
 extern void renderRun();
 extern void renderHookDraw(int (*func)(void *data), void *data);
+
+#endif /* _MMB_RENDER_H */
