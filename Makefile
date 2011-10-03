@@ -1,14 +1,3 @@
-# (adapted from
-# http://www.cs.swarthmore.edu/~newhall/unixhelp/howto_makefiles.html)
-#
-# 'make depend'  uses makedepend to automatically generate dependencies 
-#                (dependencies are added to end of Makefile)
-# 'make'         alias for 'make otrtool && make doc'
-# 'make doc'     gzips manpage
-# 'make otrtool' build executable file 'otrtool'
-# 'make clean'   removes all .o and executable files
-#
-
 SHELL = /bin/sh
 .SUFFIXES:
 .SUFFIXES: .c .o
@@ -25,7 +14,7 @@ MAIN = mmb
 
 OBJS = $(SRCS:.c=.o)
 
-.PHONY: depend clean doc
+.PHONY: depend clean
 
 all:    $(MAIN)
 	@echo Done.
@@ -40,6 +29,10 @@ clean:
 	$(RM) $(OBJS) $(MAIN)
 
 depend: $(SRCS)
-	makedepend -w70 $^
+	makedepend -w70 -Y $^
 
 # DO NOT DELETE THIS LINE -- make depend needs it
+
+src/render.o: src/render.h src/defs.h
+src/generator.o: src/generator.h src/defs.h
+src/main.o: src/defs.h src/render.h src/generator.h
