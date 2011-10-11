@@ -6,7 +6,6 @@
 typedef struct Chunk {
 	Comp lx, ly, lz;
 	Comp hx, hy, hz;
-	char type;
 
 	int neighborCount;
 	struct Chunk **neighbors;

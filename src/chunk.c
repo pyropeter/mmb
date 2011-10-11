@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include "chunk.h"
 
 Chunk *chunkGet(Comp x, Comp y, Comp z) {

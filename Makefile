@@ -9,7 +9,7 @@ CC = gcc
 CFLAGS = -Wall -g -DVERSION='"$(VERSION)"'
 LIBS = -lGL -lGLU -lglut -lm
 
-SRCS = src/render.c src/generator.c src/main.c
+SRCS = src/render.c src/generator.c src/main.c src/chunk.c
 MAIN = mmb
 
 OBJS = $(SRCS:.c=.o)
