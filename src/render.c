@@ -217,7 +217,7 @@ void renderRun() {
 	glutMainLoop();
 }
 
-void renderHookDraw(int (*func)(void *data), void *data) {
+void renderHookDraw(void (*func)(void *data), void *data) {
 	render.onDraw = func;
 	render.onDrawData = data;
 }

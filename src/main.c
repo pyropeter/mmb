@@ -8,6 +8,7 @@
 #include "defs.h"
 #include "render.h"
 #include "generator.h"
+#include "chunk.h"
 
 static Render *render;
 static Camera *camera;
@@ -101,13 +102,87 @@ void worldDraw(void *foo) {
 	}
 }
 
+int searchChunkList(Chunk *chunkList[], int len, Chunk *chunk) {
+	int i;
+	for (i = 0; i < len; i++) {
+		if (chunkList[i] == chunk)
+			return i;
+	}
+	return -1;
+}
+
+#define CHUNKLISTLEN 42
+void findChunks(Chunk *startChunk, Chunk *chunkList[], int *chunkCount) {
+	if (startChunk->blocks != NULL)
+		return; // Solid Chunk
+
+	chunkUpdate(startChunk);
+
+	Chunk *chunk;
+	int i;
+	for (i = 0; i < startChunk->neighborCount; i++) {
+		chunk = startChunk->neighbors[i];
+
+		if (searchChunkList(chunkList, *chunkCount, chunk) == -1) {
+			chunkList[*chunkCount] = chunk;
+			(*chunkCount)++;
+			if (*chunkCount >= CHUNKLISTLEN)
+				return;
+
+			findChunks(chunk, chunkList, chunkCount);
+		}
+	}
+}
+
+void drawChunk(Chunk *chunk) {
+	if (chunk->blocks == NULL)
+		return;
+
+	Block **block = chunk->blocks;
+
+	Comp x, y, z;
+	int dx, dy, dz;
+
+	dx = (int)chunk->lx - camera->ix;
+	for (x = chunk->lx; x <= chunk->hx; x++) {
+		dy = (int)chunk->ly - camera->iy;
+		for (y = chunk->ly; y <= chunk->hy; y++) {
+			dz = (int)chunk->lz - camera->iz;
+			for (z = chunk->lz; z <= chunk->hz; z++) {
+				blockDrawDist(*block, x,y,z, dx,dy,dz);
+				block++;
+				dz++;
+			}
+			dy++;
+		}
+		dx++;
+	}
+}
+
+void worldDrawChunked(void *foo) {
+	Chunk *chunkList[CHUNKLISTLEN];
+	int chunkCount = 0;
+
+	Chunk *startChunk = chunkGet(camera->ix, camera->iy, camera->iz);
+	chunkList[chunkCount] = startChunk;
+	chunkCount++;
+
+	findChunks(startChunk, chunkList, &chunkCount);
+
+	int i;
+	for (i = 0; i < chunkCount; i++) {
+		drawChunk(chunkList[i]);
+	}
+}
+
 int main(int argc, char *argv[]) {
 	render = renderInit(argc, argv);
 	camera = &(render->camera);
 
 	generatorInit();
 
-	renderHookDraw((int (*)(void *))&worldDraw, NULL);
+	renderHookDraw(&worldDraw, NULL);
+	renderHookDraw(&worldDrawChunked, NULL);
 	renderRun();
 	return EXIT_SUCCESS;
 }

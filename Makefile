@@ -35,4 +35,4 @@ depend: $(SRCS)
 
 src/render.o: src/render.h src/defs.h
 src/generator.o: src/generator.h src/defs.h
-src/main.o: src/defs.h src/render.h src/generator.h
+src/main.o: src/defs.h src/render.h src/generator.h src/chunk.h

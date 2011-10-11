@@ -16,13 +16,13 @@ typedef struct {
 	int mouseY;
 	float mouseSens;
 	Camera camera;
-	int (*onDraw)(void *data);
+	void (*onDraw)(void *data);
 	void *onDrawData;
 	int vertices;
 } Render;
 
 extern Render *renderInit(int argc, char *argv[]);
 extern void renderRun();
-extern void renderHookDraw(int (*func)(void *data), void *data);
+extern void renderHookDraw(void (*func)(void *data), void *data);
 
 #endif /* _MMB_RENDER_H */

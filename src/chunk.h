@@ -3,12 +3,18 @@
 
 #include "defs.h"
 
-struct {
+typedef struct Chunk {
 	Comp lx, ly, lz;
 	Comp hx, hy, hz;
 	char type;
-} _Chunk;
 
-typedef struct _Chunk Chunk;
+	int neighborCount;
+	struct Chunk **neighbors;
+
+	Block **blocks;
+} Chunk;
+
+extern Chunk *chunkGet(Comp x, Comp y, Comp z);
+extern void chunkUpdate(Chunk *chunk);
 
 #endif /* _MMB_CHUNK_H */
