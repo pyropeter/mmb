@@ -22,11 +22,13 @@ Chunk *chunkCreate(Metachunk *world, Point pos) {
 		chunk->blocks[0] = block;
 	}
 
+	listInsert(world->chunks, &chunk);
 	return chunk;
 }
 
 Metachunk *chunkInit(Block *(*gen)(Point), Point pos) {
 	Metachunk *world = malloc(sizeof(Metachunk));
+	world->chunks = listNew(sizeof(Chunk*));
 
 	world->generator = gen;
 

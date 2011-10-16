@@ -16,6 +16,8 @@ typedef struct Chunk {
 typedef struct Metachunk {
 	Block *(*generator)(Point);
 
+	List *chunks;
+
 	Chunk *lastChunk;
 	Point lastPos;
 } Metachunk;

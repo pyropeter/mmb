@@ -24,4 +24,7 @@ typedef struct List {
 	void *mem;
 } List;
 
+extern List *listNew(ssize_t elementSize);
+extern void listInsert(List *list, void *element);
+
 #endif /* _MMB_DEFS_H */
