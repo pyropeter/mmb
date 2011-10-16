@@ -4,16 +4,24 @@
 #include "defs.h"
 
 typedef struct Chunk {
-	Comp lx, ly, lz;
-	Comp hx, hy, hz;
+	Point low, high;
+	int status;
 
 	int neighborCount;
-	struct Chunk **neighbors;
+	struct Chunk *neighbors[6];
 
 	Block **blocks;
 } Chunk;
 
-extern Chunk *chunkGet(Comp x, Comp y, Comp z);
-extern void chunkUpdate(Chunk *chunk);
+typedef struct Metachunk {
+	Block *(*generator)(Point);
+
+	Chunk *lastChunk;
+	Point lastPos;
+} Metachunk;
+
+extern Metachunk *chunkInit(Block *(*gen)(Point), Point pos);
+extern Chunk *chunkGet(Metachunk *world, Point pos);
+extern void chunkUpdate(Metachunk *world, Chunk *chunk);
 
 #endif /* _MMB_CHUNK_H */

@@ -183,7 +183,6 @@ void onDisplay() {
 }
 
 Render *renderInit(int argc, char *argv[]) {
-	memset(&render, 0, sizeof(Render));
 	render.onDraw = NULL;
 	render.onDrawData = NULL;
 

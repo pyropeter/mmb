@@ -1,5 +1,5 @@
 /* 
- * gcc -Wall -g -c generator.c -o generator
+ * gcc -Wall -lm -g -c generator.c -o generator
  * 
  * */
 
@@ -9,26 +9,26 @@
 
 static char *blocks = " s";
 
-#define TRIG_TABLE_SIZE 64L
-static long long int sinTable[TRIG_TABLE_SIZE];
-static long long int cosTable[TRIG_TABLE_SIZE];
+#define TABLELEN 64L
+static long long int sinTable[TABLELEN];
+static long long int cosTable[TABLELEN];
 
 void generatorInit() {
-	float scale = M_PI * 2 / TRIG_TABLE_SIZE;
+	float scale = M_PI * 2 / TABLELEN;
 	int i;
-	for (i = 0; i < TRIG_TABLE_SIZE; i++) {
+	for (i = 0; i < TABLELEN; i++) {
 		sinTable[i] = (int)(65536 * sin(i * scale));
 		cosTable[i] = (int)(65536 * cos(i * scale));
 	}
 	return;
 }
 
-Block *generatorGetBlock(Comp x, Comp y, Comp z) {
-	Comp height = ((sinTable[(x * TRIG_TABLE_SIZE / 20) % TRIG_TABLE_SIZE]
-			* cosTable[(z * TRIG_TABLE_SIZE / 30) % TRIG_TABLE_SIZE])
+Block *generatorGetBlock(Point pos) {
+	Comp height = ((sinTable[(pos.x * TABLELEN / 20) % TABLELEN]
+			* cosTable[(pos.z * TABLELEN / 30) % TABLELEN])
 			/ 1000000000) + HALFCOMP;
-	
-	if (height <= y)
+
+	if (height <= pos.y)
 		return blocks;
 	else
 		return blocks + 1;

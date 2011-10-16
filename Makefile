@@ -9,7 +9,7 @@ CC = gcc
 CFLAGS = -Wall -g -DVERSION='"$(VERSION)"'
 LIBS = -lGL -lGLU -lglut -lm
 
-SRCS = src/render.c src/generator.c src/main.c src/chunk.c
+SRCS = src/render.c src/generator.c src/main.c src/chunk.c src/defs.c
 MAIN = mmb
 
 OBJS = $(SRCS:.c=.o)
@@ -36,3 +36,5 @@ depend: $(SRCS)
 src/render.o: src/render.h src/defs.h
 src/generator.o: src/generator.h src/defs.h
 src/main.o: src/defs.h src/render.h src/generator.h src/chunk.h
+src/chunk.o: src/chunk.h src/defs.h
+src/defs.o: src/defs.h

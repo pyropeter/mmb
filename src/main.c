@@ -12,6 +12,7 @@
 
 static Render *render;
 static Camera *camera;
+static Metachunk *metachunk;
 
 void blockDrawDist(Block *block, Comp x_, Comp y_, Comp z_,
 		int distX, int distY, int distZ) {
@@ -96,7 +97,8 @@ void worldDraw(void *foo) {
 	for (x = camera->ix - r; x < camera->ix + r; x++) {
 		for (y = camera->iy - r; y < camera->iy + r; y++) {
 			for (z = camera->iz - r; z < camera->iz + r; z++) {
-				blockDraw(generatorGetBlock(x,y,z), x,y,z);
+				blockDraw(generatorGetBlock(
+						(Point){x,y,z}), x,y,z);
 			}
 		}
 	}
@@ -113,10 +115,7 @@ int searchChunkList(Chunk *chunkList[], int len, Chunk *chunk) {
 
 #define CHUNKLISTLEN 42
 void findChunks(Chunk *startChunk, Chunk *chunkList[], int *chunkCount) {
-	if (startChunk->blocks != NULL)
-		return; // Solid Chunk
-
-	chunkUpdate(startChunk);
+	chunkUpdate(metachunk, startChunk);
 
 	Chunk *chunk;
 	int i;
@@ -129,7 +128,8 @@ void findChunks(Chunk *startChunk, Chunk *chunkList[], int *chunkCount) {
 			if (*chunkCount >= CHUNKLISTLEN)
 				return;
 
-			findChunks(chunk, chunkList, chunkCount);
+			if (chunk->blocks == NULL) // transparent block
+				findChunks(chunk, chunkList, chunkCount);
 		}
 	}
 }
@@ -143,12 +143,12 @@ void drawChunk(Chunk *chunk) {
 	Comp x, y, z;
 	int dx, dy, dz;
 
-	dx = (int)chunk->lx - camera->ix;
-	for (x = chunk->lx; x <= chunk->hx; x++) {
-		dy = (int)chunk->ly - camera->iy;
-		for (y = chunk->ly; y <= chunk->hy; y++) {
-			dz = (int)chunk->lz - camera->iz;
-			for (z = chunk->lz; z <= chunk->hz; z++) {
+	dx = (int)chunk->low.x - camera->ix;
+	for (x = chunk->low.x; x <= chunk->high.x; x++) {
+		dy = (int)chunk->low.y - camera->iy;
+		for (y = chunk->low.y; y <= chunk->high.y; y++) {
+			dz = (int)chunk->low.z - camera->iz;
+			for (z = chunk->low.z; z <= chunk->high.z; z++) {
 				blockDrawDist(*block, x,y,z, dx,dy,dz);
 				block++;
 				dz++;
@@ -163,7 +163,8 @@ void worldDrawChunked(void *foo) {
 	Chunk *chunkList[CHUNKLISTLEN];
 	int chunkCount = 0;
 
-	Chunk *startChunk = chunkGet(camera->ix, camera->iy, camera->iz);
+	Chunk *startChunk = chunkGet(metachunk, (Point){camera->ix,
+			camera->iy, camera->iz});
 	chunkList[chunkCount] = startChunk;
 	chunkCount++;
 
@@ -180,6 +181,9 @@ int main(int argc, char *argv[]) {
 	camera = &(render->camera);
 
 	generatorInit();
+	
+	metachunk = chunkInit(generatorGetBlock, (Point){
+			camera->ix, camera->iy, camera->iz});
 
 	renderHookDraw(&worldDraw, NULL);
 	renderHookDraw(&worldDrawChunked, NULL);

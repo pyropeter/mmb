@@ -4,6 +4,6 @@
 #include "defs.h"
 
 extern void generatorInit();
-extern Block *generatorGetBlock(Comp x, Comp y, Comp z);
+extern Block *generatorGetBlock(Point pos);
 
 #endif /* _MMB_GENERATOR_H */
