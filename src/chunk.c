@@ -8,7 +8,7 @@ Chunk *chunkCreate(Metachunk *world, Point pos) {
 	//printf("chunkCreate(): ");
 	//pointPrint(pos, "\n");
 
-	Chunk *chunk = malloc(sizeof(Chunk));
+	Chunk *chunk = knalloc(sizeof(Chunk));
 	chunk->status = 0;
 	chunk->neighborCount = 0;
 
@@ -19,7 +19,7 @@ Chunk *chunkCreate(Metachunk *world, Point pos) {
 	if (*block == ' ') {
 		chunk->blocks = NULL;
 	} else {
-		chunk->blocks = malloc(sizeof(Block*));
+		chunk->blocks = knalloc(sizeof(Block*));
 		chunk->blocks[0] = block;
 	}
 
@@ -28,7 +28,7 @@ Chunk *chunkCreate(Metachunk *world, Point pos) {
 }
 
 Metachunk *chunkInit(Block *(*gen)(Point), Point pos) {
-	Metachunk *world = malloc(sizeof(Metachunk));
+	Metachunk *world = knalloc(sizeof(Metachunk));
 	world->chunks = listNew(sizeof(Chunk*));
 
 	world->generator = gen;
@@ -86,7 +86,7 @@ void chunkUpdate(Metachunk *world, Chunk *chunk) {
 
 	if (chunk->status < 1) {
 		// the following code assumes the chunk is one block in size
-		long timer = startTimer();
+		//long timer = startTimer();
 
 		chunk->neighborCount = 0;
 		char existingChunks = 0;

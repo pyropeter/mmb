@@ -91,19 +91,6 @@ void blockDraw(Block *block, Comp x, Comp y, Comp z) {
 			(int)z - camera->iz);
 }
 
-void worldDraw(void *foo) {
-	int r = 20;
-	Comp x, y, z;
-	for (x = camera->ix - r; x < camera->ix + r; x++) {
-		for (y = camera->iy - r; y < camera->iy + r; y++) {
-			for (z = camera->iz - r; z < camera->iz + r; z++) {
-				blockDraw(generatorGetBlock(
-						(Point){x,y,z}), x,y,z);
-			}
-		}
-	}
-}
-
 int isVisible(Chunk *chunk) {
 	if(chunk->low.x > camera->high.x
 	|| chunk->low.y > camera->high.y
@@ -187,7 +174,6 @@ int main(int argc, char *argv[]) {
 	metachunk = chunkInit(generatorGetBlock, (Point){
 			camera->ix, camera->iy, camera->iz});
 
-	renderHookDraw(&worldDraw, NULL);
 	renderHookDraw(&worldDrawChunked, NULL);
 	renderRun();
 	return EXIT_SUCCESS;
