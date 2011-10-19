@@ -42,7 +42,7 @@ void listFree(List *list) {
 }
 
 void listInsert(List *list, void *ptr) {
-	if (list->end <= list->nextFree + 1) {
+	if (list->end <= list->nextFree + 2) {
 		off_t freeOffset = list->nextFree - list->mem;
 		ssize_t size = (list->end - list->mem) * 2;
 		//printf("listInsert(%p): new size is %llu\n", list,
@@ -63,10 +63,17 @@ void listInsert(List *list, void *ptr) {
 }
 
 void **listSearch(List *list, void *ptr) {
+	// place sentinel
+	*(list->nextFree) = ptr;
+
 	void **pos = list->mem;
-	for (; pos != list->nextFree; pos++) {
-		if (*pos == ptr)
-			return pos;
+	for (; ; pos++) {
+		if (*pos == ptr) {
+			if (pos != list->nextFree)
+				return pos;
+			else
+				return NULL;
+		}
 	}
 	return NULL;
 }
