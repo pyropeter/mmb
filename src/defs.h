@@ -11,6 +11,7 @@ typedef struct Point {
 	Comp x, y, z;
 } Point;
 #define POINTCMP(a,o,b) (a.x o b.x && a.y o b.y && a.z o b.z)
+void pointPrint(Point point, char* tail);
 
 typedef char Block;
 
@@ -23,6 +24,18 @@ typedef struct List {
 } List;
 
 extern List *listNew();
+extern void listFree(List *list);
 extern void listInsert(List *list, void *element);
+extern void **listSearch(List *list, void *element);
+
+#define DIR_XG  1
+#define DIR_XS  2
+#define DIR_YG  4
+#define DIR_YS  8
+#define DIR_ZG 16
+#define DIR_ZS 32
+
+extern long startTimer();
+extern long stopTimer(long start);
 
 #endif /* _MMB_DEFS_H */

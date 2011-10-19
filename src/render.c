@@ -29,6 +29,12 @@ void moveCamera(double dx, double dy, double dz) {
 	render.camera.ix = (Comp)floor(render.camera.x);
 	render.camera.iy = (Comp)floor(render.camera.y);
 	render.camera.iz = (Comp)floor(render.camera.z);
+	render.camera.low.x = render.camera.ix - render.camera.range;
+	render.camera.low.y = render.camera.iy - render.camera.range;
+	render.camera.low.z = render.camera.iz - render.camera.range;
+	render.camera.high.x = render.camera.ix + render.camera.range;
+	render.camera.high.y = render.camera.iy + render.camera.range;
+	render.camera.high.z = render.camera.iz + render.camera.range;
 }
 
 void rotateCamera(float dax, float day) {
@@ -41,8 +47,8 @@ void rotateCamera(float dax, float day) {
 	 * */
 
 	render.camera.ax += dax;
-	if (render.camera.ax < 0.1) render.camera.ax = 0.15;
-	if (render.camera.ax > 3.1) render.camera.ax = 3.05;
+	if (render.camera.ax < 0.1) render.camera.ax = 0.1;
+	if (render.camera.ax > 3.1) render.camera.ax = 3.1;
 	render.camera.ay = fmodf(render.camera.ay + day, M_PI * 2);
 
 	render.camera.dx = sinf(render.camera.ax) * sinf(render.camera.ay);
@@ -188,8 +194,9 @@ Render *renderInit(int argc, char *argv[]) {
 
 	render.mouseSens = 1.0/1000;
 
-	moveCamera(HALFCOMP, HALFCOMP + 10, HALFCOMP);
-	rotateCamera(0.5, 1.0);
+	render.camera.range = 5;
+	moveCamera(HALFCOMP, HALFCOMP + 5, HALFCOMP);
+	rotateCamera(2.5, 1.0);
 
 
 	glutInit(&argc, argv);

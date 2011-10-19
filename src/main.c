@@ -104,17 +104,22 @@ void worldDraw(void *foo) {
 	}
 }
 
-int searchChunkList(Chunk *chunkList[], int len, Chunk *chunk) {
-	int i;
-	for (i = 0; i < len; i++) {
-		if (chunkList[i] == chunk)
-			return i;
-	}
-	return -1;
+int isVisible(Chunk *chunk) {
+	if(chunk->low.x > camera->high.x
+	|| chunk->low.y > camera->high.y
+	|| chunk->low.z > camera->high.z
+	|| chunk->high.x < camera->low.x
+	|| chunk->high.y < camera->low.y
+	|| chunk->high.z < camera->low.z)
+		return 0;
+	return 1;
 }
 
-#define CHUNKLISTLEN 42
-void findChunks(Chunk *startChunk, Chunk *chunkList[], int *chunkCount) {
+void findChunks(Chunk *startChunk, List *chunkList) {
+	// out of range?
+	if (!isVisible(startChunk))
+		return;
+
 	chunkUpdate(metachunk, startChunk);
 
 	Chunk *chunk;
@@ -122,14 +127,11 @@ void findChunks(Chunk *startChunk, Chunk *chunkList[], int *chunkCount) {
 	for (i = 0; i < startChunk->neighborCount; i++) {
 		chunk = startChunk->neighbors[i];
 
-		if (searchChunkList(chunkList, *chunkCount, chunk) == -1) {
-			chunkList[*chunkCount] = chunk;
-			(*chunkCount)++;
-			if (*chunkCount >= CHUNKLISTLEN)
-				return;
+		if (listSearch(chunkList, chunk) == NULL) {
+			listInsert(chunkList, chunk);
 
 			if (chunk->blocks == NULL) // transparent block
-				findChunks(chunk, chunkList, chunkCount);
+				findChunks(chunk, chunkList);
 		}
 	}
 }
@@ -160,20 +162,20 @@ void drawChunk(Chunk *chunk) {
 }
 
 void worldDrawChunked(void *foo) {
-	Chunk *chunkList[CHUNKLISTLEN];
-	int chunkCount = 0;
+	List *chunkList = listNew();
 
 	Chunk *startChunk = chunkGet(metachunk, (Point){camera->ix,
 			camera->iy, camera->iz});
-	chunkList[chunkCount] = startChunk;
-	chunkCount++;
+	listInsert(chunkList, startChunk);
 
-	findChunks(startChunk, chunkList, &chunkCount);
+	findChunks(startChunk, chunkList);
 
-	int i;
-	for (i = 0; i < chunkCount; i++) {
-		drawChunk(chunkList[i]);
+	Chunk **chunk = (Chunk**)chunkList->mem;
+	for (; (void**)chunk != chunkList->nextFree; chunk++) {
+		drawChunk(*chunk);
 	}
+
+	listFree(chunkList);
 }
 
 int main(int argc, char *argv[]) {

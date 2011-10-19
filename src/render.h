@@ -8,6 +8,9 @@ typedef struct {
 	Comp ix, iy, iz;
 	float dx, dy, dz;
 	float ax, ay;
+
+	int range;
+	Point low, high;
 } Camera;
 
 typedef struct {

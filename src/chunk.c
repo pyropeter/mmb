@@ -5,7 +5,8 @@
 #include "chunk.h"
 
 Chunk *chunkCreate(Metachunk *world, Point pos) {
-	printf("chunkCreate(): %i/%i/%i\n", pos.x, pos.y, pos.z);
+	//printf("chunkCreate(): ");
+	//pointPrint(pos, "\n");
 
 	Chunk *chunk = malloc(sizeof(Chunk));
 	chunk->status = 0;
@@ -60,20 +61,110 @@ Chunk *chunkGet(Metachunk *world, Point pos) {
 		}
 	}
 
-	printf("Yay, SEGFAULT!\n");
+	int j;
+	for (i = 0; i < world->lastChunk->neighborCount; i++) {
+		Chunk *middle = world->lastChunk->neighbors[i];
+		for (j = 0; j < middle->neighborCount; j++) {
+			Chunk *neighbor = middle->neighbors[j];
+			if (POINTCMP(neighbor->low, <=, pos) &&
+					POINTCMP(neighbor->high, >=, pos)) {
+				world->lastChunk = neighbor;
+				world->lastPos = pos;
+				return neighbor;
+			}
+		}
+	}
+
+	printf("Camera moved out of nearby chunks, crashing\n");
+	exit(EXIT_FAILURE);
 	return NULL;
 }
 
 void chunkUpdate(Metachunk *world, Chunk *chunk) {
-	//printf("chunkUpdate(): %i/%i/%i %i\n",
-	//		chunk->low.x, chunk->low.y, chunk->low.z, chunk->status);
+	// chunkUpdate() finds all the neighbors of a chunk (and creates them,
+	// if they were not created already)
 
 	if (chunk->status < 1) {
-		Chunk *newChunk = chunkCreate(world, (Point){
-			chunk->low.x, chunk->low.y - 1, chunk->low.z});
-		newChunk->neighbors[newChunk->neighborCount++] = chunk;
-		chunk->neighbors[chunk->neighborCount++] = newChunk;
+		// the following code assumes the chunk is one block in size
+		long timer = startTimer();
+
+		chunk->neighborCount = 0;
+		char existingChunks = 0;
+
+		Chunk **otherChunk = (Chunk**)world->chunks->mem;
+		for (; (void**)otherChunk != world->chunks->nextFree;
+				otherChunk++) {
+			if (chunk->high.x + 1 == (*otherChunk)->low.x
+			&& chunk->high.y >= (*otherChunk)->low.y
+			&& chunk->high.z >= (*otherChunk)->low.z
+			&& chunk->low.y <= (*otherChunk)->high.y
+			&& chunk->low.z <= (*otherChunk)->high.z) {
+				existingChunks += DIR_XG;
+			} else if (chunk->low.x - 1 == (*otherChunk)->high.x
+			&& chunk->high.y >= (*otherChunk)->low.y
+			&& chunk->high.z >= (*otherChunk)->low.z
+			&& chunk->low.y <= (*otherChunk)->high.y
+			&& chunk->low.z <= (*otherChunk)->high.z) {
+				existingChunks += DIR_XS;
+			} else if (chunk->high.y + 1 == (*otherChunk)->low.y
+			&& chunk->high.x >= (*otherChunk)->low.x
+			&& chunk->high.z >= (*otherChunk)->low.z
+			&& chunk->low.x <= (*otherChunk)->high.x
+			&& chunk->low.z <= (*otherChunk)->high.z) {
+				existingChunks += DIR_YG;
+			} else if (chunk->low.y - 1 == (*otherChunk)->high.y
+			&& chunk->high.x >= (*otherChunk)->low.x
+			&& chunk->high.z >= (*otherChunk)->low.z
+			&& chunk->low.x <= (*otherChunk)->high.x
+			&& chunk->low.z <= (*otherChunk)->high.z) {
+				existingChunks += DIR_YS;
+			} else if (chunk->high.z + 1 == (*otherChunk)->low.z
+			&& chunk->high.x >= (*otherChunk)->low.x
+			&& chunk->high.y >= (*otherChunk)->low.y
+			&& chunk->low.x <= (*otherChunk)->high.x
+			&& chunk->low.y <= (*otherChunk)->high.y) {
+				existingChunks += DIR_ZG;
+			} else if (chunk->low.z - 1 == (*otherChunk)->high.z
+			&& chunk->high.x >= (*otherChunk)->low.x
+			&& chunk->high.y >= (*otherChunk)->low.y
+			&& chunk->low.x <= (*otherChunk)->high.x
+			&& chunk->low.y <= (*otherChunk)->high.y) {
+				existingChunks += DIR_ZS;
+			} else {
+				continue;
+			}
+			chunk->neighbors[chunk->neighborCount++] = *otherChunk;
+		}
+
+		if ((existingChunks & DIR_XG) == 0)
+			chunk->neighbors[chunk->neighborCount++] = chunkCreate(
+					world, (Point){chunk->low.x + 1,
+					chunk->low.y, chunk->low.z});
+		if ((existingChunks & DIR_XS) == 0)
+			chunk->neighbors[chunk->neighborCount++] = chunkCreate(
+					world, (Point){chunk->low.x - 1,
+					chunk->low.y, chunk->low.z});
+		if ((existingChunks & DIR_YG) == 0)
+			chunk->neighbors[chunk->neighborCount++] = chunkCreate(
+					world, (Point){chunk->low.x,
+					chunk->low.y + 1, chunk->low.z});
+		if ((existingChunks & DIR_YS) == 0)
+			chunk->neighbors[chunk->neighborCount++] = chunkCreate(
+					world, (Point){chunk->low.x,
+					chunk->low.y - 1, chunk->low.z});
+		if ((existingChunks & DIR_ZG) == 0)
+			chunk->neighbors[chunk->neighborCount++] = chunkCreate(
+					world, (Point){chunk->low.x,
+					chunk->low.y, chunk->low.z + 1});
+		if ((existingChunks & DIR_ZS) == 0)
+			chunk->neighbors[chunk->neighborCount++] = chunkCreate(
+					world, (Point){chunk->low.x,
+					chunk->low.y, chunk->low.z - 1});
+
+		//printf("Search for neighbors took %lims\n", stopTimer(timer));
 		chunk->status = 1;
+		//printf("chunkUpdate(): found %i for ", chunk->neighborCount);
+		//pointPrint(chunk->low, "\n");
 	}
 }
 

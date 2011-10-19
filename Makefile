@@ -6,7 +6,7 @@ DVERSION = v0.0.2
 VERSION := $(shell git describe --long --dirty 2>/dev/null || echo "$(DVERSION)")
 
 CC = gcc
-CFLAGS = -Wall -g -DVERSION='"$(VERSION)"'
+CFLAGS = -Wall -g -DVERSION='"$(VERSION)"' -pg
 LIBS = -lGL -lGLU -lglut -lm
 
 SRCS = src/render.c src/generator.c src/main.c src/chunk.c src/defs.c
