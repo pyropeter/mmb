@@ -188,6 +188,10 @@ void onDisplay() {
 	glutSwapBuffers();
 }
 
+void onIdle() {
+	glutPostRedisplay();
+}
+
 Render *renderInit(int argc, char *argv[]) {
 	render.onDraw = NULL;
 	render.onDrawData = NULL;
@@ -215,6 +219,7 @@ Render *renderInit(int argc, char *argv[]) {
 	glutKeyboardFunc(&onKeyboard);
 	glutMouseFunc(&onMouse);
 	glutDisplayFunc(&onDisplay);
+	glutIdleFunc(&onIdle);
 
 	return &render;
 }
