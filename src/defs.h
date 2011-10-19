@@ -17,14 +17,12 @@ typedef char Block;
 extern void *knalloc(size_t size);
 
 typedef struct List {
-	ssize_t elementSize;
-	off_t nextFree;
-
-	ssize_t memSize;
-	void *mem;
+	void **mem;
+	void **end;
+	void **nextFree;
 } List;
 
-extern List *listNew(ssize_t elementSize);
+extern List *listNew();
 extern void listInsert(List *list, void *element);
 
 #endif /* _MMB_DEFS_H */

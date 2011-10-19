@@ -22,7 +22,7 @@ Chunk *chunkCreate(Metachunk *world, Point pos) {
 		chunk->blocks[0] = block;
 	}
 
-	listInsert(world->chunks, &chunk);
+	listInsert(world->chunks, chunk);
 	return chunk;
 }
 
@@ -60,6 +60,7 @@ Chunk *chunkGet(Metachunk *world, Point pos) {
 		}
 	}
 
+	printf("Yay, SEGFAULT!\n");
 	return NULL;
 }
 

@@ -14,23 +14,27 @@ void *knalloc(size_t size) {
 	return mem;
 }
 
-List *listNew(ssize_t elementSize) {
+List *listNew() {
 	List *list = knalloc(sizeof(List));
-	list->nextFree = 0;
 
-	list->elementSize = elementSize;
-
-	list->memSize = 64;
-	list->mem = knalloc(list->memSize);
+	ssize_t size = 8;
+	list->mem = knalloc(size * sizeof(void*));
+	list->nextFree = list->mem;
+	list->end = list->mem + size;
 
 	return list;
 }
 
-void listInsert(List *list, void *element) {
-	if (list->memSize < list->nextFree + list->elementSize) {
-		list->memSize *= 2;
-		printf("listInsert(): new memSize is %i\n", list->memSize);
-		list->mem = realloc(list->mem, list->memSize);
+void listInsert(List *list, void *ptr) {
+	if (list->end <= list->nextFree + sizeof(void*)) {
+		off_t freeOffset = list->nextFree - list->mem;
+		ssize_t size = (list->end - list->mem) * 2;
+		printf("listInsert(): new size is %llu\n",
+				(long long unsigned int)size);
+
+		list->mem = realloc(list->mem, size * sizeof(void*));
+		list->end = list->mem + size;
+		list->nextFree = list->mem + freeOffset;
 
 		if (list->mem == NULL) {
 			fprintf(stderr, "realloc() failed. out of memory?\n");
@@ -38,7 +42,8 @@ void listInsert(List *list, void *element) {
 		}
 	}
 
-	memcpy(list->nextFree, element, list->elementSize);
+	*(list->nextFree) = ptr;
+	list->nextFree++;
 }
 
 
