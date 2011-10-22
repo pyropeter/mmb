@@ -10,6 +10,7 @@ Chunk *chunkCreate(Metachunk *world, Point pos) {
 
 	Chunk *chunk = knalloc(sizeof(Chunk));
 	chunk->status = 0;
+	chunk->lastRender = 0;
 	chunk->neighborCount = 0;
 
 	chunk->low = pos;

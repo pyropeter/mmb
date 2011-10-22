@@ -6,6 +6,7 @@
 typedef struct Chunk {
 	Point low, high;
 	int status;
+	int lastRender;
 
 	int neighborCount;
 	struct Chunk *neighbors[6];

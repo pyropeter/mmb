@@ -198,7 +198,7 @@ Render *renderInit(int argc, char *argv[]) {
 
 	render.mouseSens = 1.0/1000;
 
-	render.camera.range = 5;
+	render.camera.range = 10;
 	moveCamera(HALFCOMP, HALFCOMP + 5, HALFCOMP);
 	rotateCamera(2.5, 1.0);
 
