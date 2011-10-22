@@ -89,7 +89,7 @@ void chunkUpdate(Metachunk *world, Chunk *chunk) {
 		//long timer = startTimer();
 
 		chunk->neighborCount = 0;
-		char existingChunks = 0;
+		int existingChunks = 0;
 
 		Chunk **otherChunk = (Chunk**)world->chunks->mem;
 		for (; (void**)otherChunk != world->chunks->nextFree;
