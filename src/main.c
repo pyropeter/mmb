@@ -84,13 +84,6 @@ void blockDrawDist(Block *block, Comp x_, Comp y_, Comp z_,
 	glPopMatrix();
 }
 
-void blockDraw(Block *block, Comp x, Comp y, Comp z) {
-	blockDrawDist(block, x,y,z,
-			(int)x - camera->ix,
-			(int)y - camera->iy,
-			(int)z - camera->iz);
-}
-
 int isVisible(Chunk *chunk) {
 	if(chunk->low.x > camera->high.x
 	|| chunk->low.y > camera->high.y
