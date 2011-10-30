@@ -85,6 +85,31 @@ void blockDrawDist(Block *block, Comp x_, Comp y_, Comp z_,
 	glPopMatrix();
 }
 
+void drawChunk(Chunk *chunk) {
+	if (chunk->blocks == NULL)
+		return;
+
+	Block **block = chunk->blocks;
+
+	Comp x, y, z;
+	int dx, dy, dz;
+
+	dx = (int)chunk->low.x - camera->ix;
+	for (x = chunk->low.x; x <= chunk->high.x; x++) {
+		dy = (int)chunk->low.y - camera->iy;
+		for (y = chunk->low.y; y <= chunk->high.y; y++) {
+			dz = (int)chunk->low.z - camera->iz;
+			for (z = chunk->low.z; z <= chunk->high.z; z++) {
+				blockDrawDist(*block, x,y,z, dx,dy,dz);
+				block++;
+				dz++;
+			}
+			dy++;
+		}
+		dx++;
+	}
+}
+
 int isVisible(Chunk *chunk) {
 	if(chunk->low.x > camera->high.x
 	|| chunk->low.y > camera->high.y
@@ -115,31 +140,6 @@ void findChunks(Chunk *startChunk, List *chunkList) {
 			if (chunk->blocks == NULL) // transparent block
 				findChunks(chunk, chunkList);
 		}
-	}
-}
-
-void drawChunk(Chunk *chunk) {
-	if (chunk->blocks == NULL)
-		return;
-
-	Block **block = chunk->blocks;
-
-	Comp x, y, z;
-	int dx, dy, dz;
-
-	dx = (int)chunk->low.x - camera->ix;
-	for (x = chunk->low.x; x <= chunk->high.x; x++) {
-		dy = (int)chunk->low.y - camera->iy;
-		for (y = chunk->low.y; y <= chunk->high.y; y++) {
-			dz = (int)chunk->low.z - camera->iz;
-			for (z = chunk->low.z; z <= chunk->high.z; z++) {
-				blockDrawDist(*block, x,y,z, dx,dy,dz);
-				block++;
-				dz++;
-			}
-			dy++;
-		}
-		dx++;
 	}
 }
 

@@ -19,6 +19,7 @@
 #endif
 
 static Render render;
+static int frameno = 0;
 
 // =====================================================================
 
@@ -154,6 +155,9 @@ void onMouse(int button, int state, int x, int y) {
 }
 
 void onDisplay() {
+	if (++frameno == 1000)
+		glutLeaveMainLoop();
+
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
