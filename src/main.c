@@ -121,7 +121,7 @@ int isVisible(Chunk *chunk) {
 	return 1;
 }
 
-void findChunks(Chunk *startChunk, List *chunkList) {
+void findChunks(Chunk *startChunk) {
 	// out of range?
 	if (!isVisible(startChunk))
 		return;
@@ -135,10 +135,10 @@ void findChunks(Chunk *startChunk, List *chunkList) {
 
 		if (chunk->lastRender != frameNumber) {
 			chunk->lastRender = frameNumber;
-			listInsert(chunkList, chunk);
+			drawChunk(chunk);
 
 			if (chunk->blocks == NULL) // transparent block
-				findChunks(chunk, chunkList);
+				findChunks(chunk);
 		}
 	}
 }
@@ -147,21 +147,11 @@ void worldDrawChunked(void *foo) {
 	if (++frameNumber == 0)
 		frameNumber++;
 
-	List *chunkList = listNew();
-
 	Chunk *startChunk = chunkGet(metachunk, (Point){camera->ix,
 			camera->iy, camera->iz});
 	startChunk->lastRender = frameNumber;
-	listInsert(chunkList, startChunk);
 
-	findChunks(startChunk, chunkList);
-
-	Chunk **chunk = (Chunk**)chunkList->mem;
-	for (; (void**)chunk != chunkList->nextFree; chunk++) {
-		drawChunk(*chunk);
-	}
-
-	listFree(chunkList);
+	findChunks(startChunk);
 }
 
 int main(int argc, char *argv[]) {
