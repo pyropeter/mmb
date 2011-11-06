@@ -44,27 +44,19 @@ Metachunk *chunkInit(Block *(*gen)(Point), Point pos) {
 }
 
 Chunk *chunkGet(Metachunk *world, Point pos) {
+	// check if position has changed at all
 	if (POINTCMP(world->lastPos, ==, pos))
 		return world->lastChunk;
 
+	// check if point is still in last chunk
 	if (POINTCMP(world->lastChunk->low, <=, pos) &&
 			POINTCMP(world->lastChunk->high, >=, pos)) {
 		world->lastPos = pos;
 		return world->lastChunk;
 	}
 
-	int i;
-	for (i = 0; i < world->lastChunk->adjacentCount; i++) {
-		Chunk *adjacent = world->lastChunk->adjacent[i];
-		if (POINTCMP(adjacent->low, <=, pos) &&
-				POINTCMP(adjacent->high, >=, pos)) {
-			world->lastChunk = adjacent;
-			world->lastPos = pos;
-			return adjacent;
-		}
-	}
-
-	int j;
+	// check chunks adjacent to the chunks adjacent to the last chunk
+	int i, j;
 	for (i = 0; i < world->lastChunk->adjacentCount; i++) {
 		Chunk *middle = world->lastChunk->adjacent[i];
 		for (j = 0; j < middle->adjacentCount; j++) {
@@ -78,7 +70,18 @@ Chunk *chunkGet(Metachunk *world, Point pos) {
 		}
 	}
 
-	printf("Camera moved out of nearby chunks, crashing\n");
+	// just check all chunks (boring, slow but simple approach)
+	Chunk **chunk = (Chunk**)world->chunks->mem;
+	for (; (void**)chunk != world->chunks->nextFree; chunk++) {
+		if (POINTCMP((*chunk)->low, <=, pos) &&
+				POINTCMP((*chunk)->high, >=, pos)) {
+			world->lastPos = pos;
+			world->lastChunk = *chunk;
+			return world->lastChunk;
+		}
+	}
+
+	printf("Camera moved out of known chunks, crashing\n");
 	exit(EXIT_FAILURE);
 	return NULL;
 }
