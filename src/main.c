@@ -130,8 +130,8 @@ void findChunks(Chunk *startChunk) {
 
 	Chunk *chunk;
 	int i;
-	for (i = 0; i < startChunk->neighborCount; i++) {
-		chunk = startChunk->neighbors[i];
+	for (i = 0; i < startChunk->adjacentCount; i++) {
+		chunk = startChunk->adjacent[i];
 
 		if (chunk->lastRender != frameNumber) {
 			chunk->lastRender = frameNumber;

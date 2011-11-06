@@ -8,8 +8,8 @@ typedef struct Chunk {
 	int status;
 	int lastRender;
 
-	int neighborCount;
-	struct Chunk *neighbors[6];
+	int adjacentCount;
+	struct Chunk **adjacent;
 
 	Block **blocks;
 } Chunk;
