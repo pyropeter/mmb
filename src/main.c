@@ -86,6 +86,46 @@ void blockDrawDist(Block *block, Comp x_, Comp y_, Comp z_,
 }
 
 void drawChunk(Chunk *chunk) {
+	// draw chunk's bounding rectangle as wireframe
+	
+	int x1 = (long long int)chunk->low.x - HALFCOMP;
+	int y1 = (long long int)chunk->low.y - HALFCOMP;
+	int z1 = (long long int)chunk->low.z - HALFCOMP;
+	int x2 = (long long int)chunk->high.x - HALFCOMP + 1;
+	int y2 = (long long int)chunk->high.y - HALFCOMP + 1;
+	int z2 = (long long int)chunk->high.z - HALFCOMP + 1;
+
+	glDisable(GL_LIGHTING);
+	glBegin(GL_LINES); {
+		glVertex3f(x1, y1, z1);
+		glVertex3f(x1, y1, z2);
+		glVertex3f(x1, y2, z1);
+		glVertex3f(x1, y2, z2);
+		glVertex3f(x2, y1, z1);
+		glVertex3f(x2, y1, z2);
+		glVertex3f(x2, y2, z1);
+		glVertex3f(x2, y2, z2);
+
+		glVertex3f(x1, y1, z1);
+		glVertex3f(x1, y2, z1);
+		glVertex3f(x1, y1, z2);
+		glVertex3f(x1, y2, z2);
+		glVertex3f(x2, y1, z1);
+		glVertex3f(x2, y2, z1);
+		glVertex3f(x2, y1, z2);
+		glVertex3f(x2, y2, z2);
+
+		glVertex3f(x1, y1, z1);
+		glVertex3f(x2, y1, z1);
+		glVertex3f(x1, y1, z2);
+		glVertex3f(x2, y1, z2);
+		glVertex3f(x1, y2, z1);
+		glVertex3f(x2, y2, z1);
+		glVertex3f(x1, y2, z2);
+		glVertex3f(x2, y2, z2);
+	}; glEnd();
+	glEnable(GL_LIGHTING);
+
 	if (chunk->blocks == NULL)
 		return;
 
@@ -128,17 +168,14 @@ void findChunks(Chunk *startChunk) {
 
 	chunkUpdate(metachunk, startChunk);
 
-	Chunk *chunk;
-	int i;
-	for (i = 0; i < startChunk->adjacentCount; i++) {
-		chunk = startChunk->adjacent[i];
+	Chunk **chunk = (Chunk**)startChunk->adjacent->mem;
+	for (; (void**)chunk != startChunk->adjacent->nextFree; chunk++) {
+		if ((*chunk)->lastRender != frameNumber) {
+			(*chunk)->lastRender = frameNumber;
+			drawChunk(*chunk);
 
-		if (chunk->lastRender != frameNumber) {
-			chunk->lastRender = frameNumber;
-			drawChunk(chunk);
-
-			if (chunk->blocks == NULL) // transparent block
-				findChunks(chunk);
+			if ((*chunk)->blocks == NULL) // transparent block
+				findChunks(*chunk);
 		}
 	}
 }

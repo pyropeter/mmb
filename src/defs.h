@@ -13,6 +13,10 @@ typedef struct Point {
 #define POINTCMP(a,o,b) (a.x o b.x && a.y o b.y && a.z o b.z)
 void pointPrint(Point point, char* tail);
 
+typedef struct Point3i {
+	int x, y, z;
+} Point3i;
+
 typedef char Block;
 
 extern void *knalloc(size_t size);
@@ -27,6 +31,8 @@ extern List *listNew();
 extern void listFree(List *list);
 extern void listInsert(List *list, void *element);
 extern void **listSearch(List *list, void *element);
+#define LISTITER(list, var, type) \
+	for (var = (type)(list)->mem; (void**)var != (list)->nextFree; var++)
 
 #define DIR_XG  1
 #define DIR_XS  2
@@ -37,5 +43,6 @@ extern void **listSearch(List *list, void *element);
 
 extern long startTimer();
 extern long stopTimer(long start);
+extern void explode();
 
 #endif /* _MMB_DEFS_H */

@@ -8,11 +8,16 @@ typedef struct Chunk {
 	int status;
 	int lastRender;
 
-	int adjacentCount;
-	struct Chunk **adjacent;
+	List *adjacent;
 
 	Block **blocks;
 } Chunk;
+
+typedef struct AnnotatedBlock {
+	Block *block;
+	Point3i low, high, low2, high2;
+	Chunk *chunk;
+} AnnotatedBlock;
 
 typedef struct Metachunk {
 	Block *(*generator)(Point);

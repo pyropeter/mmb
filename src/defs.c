@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include <signal.h>
 
 #include "defs.h"
 
@@ -85,5 +86,9 @@ long startTimer() {
 
 long stopTimer(long start) {
 	return (startTimer() + 1000000000 - start) % 1000000000;
+}
+
+void explode() {
+	raise(SIGABRT);
 }
 

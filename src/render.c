@@ -155,8 +155,8 @@ void onMouse(int button, int state, int x, int y) {
 }
 
 void onDisplay() {
-	if (++frameno == 1000)
-		glutLeaveMainLoop();
+	//if (++frameno == 1000)
+	//	glutLeaveMainLoop();
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -202,8 +202,8 @@ Render *renderInit(int argc, char *argv[]) {
 
 	render.mouseSens = 1.0/1000;
 
-	render.camera.range = 10;
-	moveCamera(HALFCOMP, HALFCOMP + 5, HALFCOMP);
+	render.camera.range = 4;
+	moveCamera(HALFCOMP, HALFCOMP + 1, HALFCOMP);
 	rotateCamera(2.5, 1.0);
 
 
