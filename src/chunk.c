@@ -5,6 +5,8 @@
 #include "defs.h"
 #include "chunk.h"
 
+static int error = 0;
+
 Chunk *chunkCreateBare(Metachunk *world) {
 	Chunk *chunk = knalloc(sizeof(Chunk));
 	chunk->status = 0;
@@ -52,18 +54,25 @@ void chunkTagBlocks(AnnotatedBlock *blocks, int sizeY, int sizeZ,
 	for (z = low.z; z <= high.z; z++) {
 		block = blocks + x*sizeY*sizeZ + y*sizeZ + z;
 		if (block->chunk != NULL) {
-			fprintf(stderr, "FUUUUUUUUUUUU\n");
-			//exit(EXIT_FAILURE);
+			printf("FUUUUUUUUUUUU\n");
+			error++;
 		}
-		if (!POINTCMP(block->high2, ==, high)) {
-			fprintf(stderr, "FU FU FU FU\n");
-			//exit(EXIT_FAILURE);
+		if (!POINTCMP(block->high4, ==, high)) {
+			printf("wrong high4: %i %i %i\n",
+					block->high4.x,
+					block->high4.y,
+					block->high4.z);
+			error++;
 		}
-		if (!POINTCMP(block->low2, ==, low)) {
-			fprintf(stderr, "FU FU FU FU low\n");
-			//exit(EXIT_FAILURE);
+		if (!POINTCMP(block->low4, ==, low)) {
+			printf("wrong  low4: %i %i %i\n",
+					block->low4.x,
+					block->low4.y,
+					block->low4.z);
+			error++;
 		}
 		block->chunk = chunk;
+		printf("----\n");
 	}
 	}
 	}
@@ -76,45 +85,31 @@ void chunkCreateBatch(Metachunk *world, Point low, Point high) {
 	int sizeZ = high.z - low.z;
 	int blockcount = sizeX * sizeY * sizeZ;
 	AnnotatedBlock *blocks = knalloc(blockcount * sizeof(AnnotatedBlock));
+	AnnotatedBlock *tmp, *tmpX, *tmpY, *tmpZ;
+	Chunk *newChunk;
+	//int chunkSizeX, chunkSizeY, chunkSizeZ;
+	int total = 0;
+	Point3i pos;
+	Point p;
 
 	// init: set some values to 0 or size[XYZ]-1
 	// the following loop is extremly stupid, but I can't think properly
 	// at the moment and I really want to know if the 1st pass loop works
-	AnnotatedBlock *tmp = blocks;
-	for (x = 0; x < sizeX; x++) {
-	for (y = 0; y < sizeY; y++) {
-	for (z = 0; z < sizeZ; z++) {
-		if (x == sizeX - 1) {
-			tmp->high.x = x;
-			tmp->high2.x = x;
-		}
-		if (y == sizeY - 1) {
-			tmp->high.y = y;
-			tmp->high2.y = y;
-		}
-		if (z == sizeZ - 1) {
-			tmp->high.z = z;
-			tmp->high2.z = z;
-		}
-		if (x == 0) {
-			tmp->low.x = x;
-			tmp->low2.x = x;
-		}
-		if (y == 0) {
-			tmp->low.y = y;
-			tmp->low2.y = y;
-		}
-		if (z == 0) {
-			tmp->low.z = z;
-			tmp->low2.z = z;
-		}
+	tmp = blocks;
+	for (pos.x = 0; pos.x < sizeX; pos.x++) {
+	for (pos.y = 0; pos.y < sizeY; pos.y++) {
+	for (pos.z = 0; pos.z < sizeZ; pos.z++) {
+		tmp->low = tmp->high = pos;
+		tmp->low2 = tmp->high2 = pos;
+		tmp->low3 = tmp->high3 = pos;
+		tmp->low4 = tmp->high4 = pos;
 		tmp->chunk = NULL;
 		tmp++;
 	}
 	}
 	}
 
-	Point p;
+	// load blocks from map generator into blocks
 	tmp = blocks;
 	for (p.x = low.x; p.x < high.x; p.x++) {
 	for (p.y = low.y; p.y < high.y; p.y++) {
@@ -137,11 +132,11 @@ void chunkCreateBatch(Metachunk *world, Point low, Point high) {
 		printf("\n");
 	}
 
-	// first pass
-	tmp = blocks + blockcount - 1; // start at the last block
-	AnnotatedBlock *tmpX = tmp + sizeZ * sizeY;
-	AnnotatedBlock *tmpY = tmp + sizeZ;
-	AnnotatedBlock *tmpZ = tmp + 1;
+	// set high
+	tmp = blocks + blockcount - 1;
+	tmpX = tmp + sizeZ * sizeY;
+	tmpY = tmp + sizeZ;
+	tmpZ = tmp + 1;
 	for (x = sizeX - 1; x >= 0; x--) {
 	for (y = sizeY - 1; y >= 0; y--) {
 	for (z = sizeZ - 1; z >= 0; z--) {
@@ -175,14 +170,12 @@ void chunkCreateBatch(Metachunk *world, Point low, Point high) {
 	}
 	}
 
-	// second pass
-	// similar to the first, but in opposite direction
-	// additionally, chunk-like stuff gets extracted and saved
+	// set low
+	// set low2
 	tmp = blocks;
 	tmpX = tmp - sizeZ * sizeY;
 	tmpY = tmp - sizeZ;
 	tmpZ = tmp - 1;
-	//List *chunks = listNew();
 	for (x = 0; x < sizeX; x++) {
 	for (y = 0; y < sizeY; y++) {
 	for (z = 0; z < sizeZ; z++) {
@@ -244,12 +237,9 @@ void chunkCreateBatch(Metachunk *world, Point low, Point high) {
 	}
 	}
 
-	Chunk *newChunk;
-	int chunkSizeX, chunkSizeY, chunkSizeZ;
-
-	int total = 0;
-	// third pass
-	tmp = blocks + blockcount - 1; // start at the last block
+	// set high2
+	// set high3
+	tmp = blocks + blockcount - 1;
 	tmpX = tmp + sizeZ * sizeY;
 	tmpY = tmp + sizeZ;
 	tmpZ = tmp + 1;
@@ -283,24 +273,33 @@ void chunkCreateBatch(Metachunk *world, Point low, Point high) {
 				tmp->high2.z = z;
 			}
 		}
-		if (tmp->low2.x == x && tmp->low2.y == y && tmp->low2.z == z) {
-			// found a chunk!
-			total++;
-			printf("Chunk: %i/%i/%i  %i/%i/%i\n",
-				tmp->low2.x, tmp->low2.y, tmp->low2.z,
-				tmp->high2.x, tmp->high2.y, tmp->high2.z);
-			newChunk = chunkCreateBare(world);
-			newChunk->low.x = low.x + tmp->low2.x;
-			newChunk->low.y = low.y + tmp->low2.y;
-			newChunk->low.z = low.z + tmp->low2.z;
-			newChunk->high.x = low.x + tmp->high2.x;
-			newChunk->high.y = low.y + tmp->high2.y;
-			newChunk->high.z = low.z + tmp->high2.z;
-			chunkSizeX = tmp->high2.x - tmp->low2.x;
-			chunkSizeY = tmp->high2.y - tmp->low2.y;
-			chunkSizeZ = tmp->high2.z - tmp->low2.z;
-			chunkTagBlocks(blocks, sizeY, sizeZ,
-					tmp->low2, tmp->high2, newChunk);
+		// ------------------
+		if (x < sizeX - 1) {
+			// compare with next block in XG-dir.
+			if (POINTCMP(tmp->high2, ==, tmpX->high2)
+			 && POINTCMP(tmp->low2, ==, tmpX->low2)) {
+				tmp->high3.x = tmpX->high3.x;
+			} else {
+				tmp->high3.x = x;
+			}
+		}
+		if (y < sizeY - 1) {
+			// compare with neyt block in YG-dir.
+			if (POINTCMP(tmp->high2, ==, tmpY->high2)
+			 && POINTCMP(tmp->low2, ==, tmpY->low2)) {
+				tmp->high3.y = tmpY->high3.y;
+			} else {
+				tmp->high3.y = y;
+			}
+		}
+		if (z < sizeZ - 1) {
+			// compare with nezt block in ZG-dir.
+			if (POINTCMP(tmp->high2, ==, tmpZ->high2)
+			 && POINTCMP(tmp->low2, ==, tmpZ->low2)) {
+				tmp->high3.z = tmpZ->high3.z;
+			} else {
+				tmp->high3.z = z;
+			}
 		}
 		tmp--;
 		tmpX--; tmpY--; tmpZ--;
@@ -308,19 +307,164 @@ void chunkCreateBatch(Metachunk *world, Point low, Point high) {
 	}
 	}
 
-	printf("x y z | low   | high  | low2  | high2 | chunk\n");
-	printf("------+-------+-------+-------+-------+------\n");
+	// set low3
+	// set low4
+	tmp = blocks;
+	tmpX = tmp - sizeZ * sizeY;
+	tmpY = tmp - sizeZ;
+	tmpZ = tmp - 1;
+	for (x = 0; x < sizeX; x++) {
+	for (y = 0; y < sizeY; y++) {
+	for (z = 0; z < sizeZ; z++) {
+		if (x > 0) {
+			// compare with next block in XS-dir.
+			if (POINTCMP(tmp->high2, ==, tmpX->high2)
+			 && POINTCMP(tmp->low2, ==, tmpX->low2)) {
+				tmp->low3.x = tmpX->low3.x;
+			} else {
+				tmp->low3.x = x;
+			}
+		}
+		if (y > 0) {
+			// compare with neyt block in YS-dir.
+			if (POINTCMP(tmp->high2, ==, tmpY->high2)
+			 && POINTCMP(tmp->low2, ==, tmpY->low2)) {
+				tmp->low3.y = tmpY->low3.y;
+			} else {
+				tmp->low3.y = y;
+			}
+		}
+		if (z > 0) {
+			// compare with nezt block in ZS-dir.
+			if (POINTCMP(tmp->high2, ==, tmpZ->high2)
+			 && POINTCMP(tmp->low2, ==, tmpZ->low2)) {
+				tmp->low3.z = tmpZ->low3.z;
+			} else {
+				tmp->low3.z = z;
+			}
+		}
+		// ------------------
+		if (x > 0) {
+			// compare with next block in XS-dir.
+			if (POINTCMP(tmp->high3, ==, tmpX->high3)
+			 && POINTCMP(tmp->low3, ==, tmpX->low3)) {
+				tmp->low4.x = tmpX->low4.x;
+			} else {
+				tmp->low4.x = x;
+			}
+		}
+		if (y > 0) {
+			// compare with neyt block in YS-dir.
+			if (POINTCMP(tmp->high3, ==, tmpY->high3)
+			 && POINTCMP(tmp->low3, ==, tmpY->low3)) {
+				tmp->low4.y = tmpY->low4.y;
+			} else {
+				tmp->low4.y = y;
+			}
+		}
+		if (z > 0) {
+			// compare with nezt block in ZS-dir.
+			if (POINTCMP(tmp->high3, ==, tmpZ->high3)
+			 && POINTCMP(tmp->low3, ==, tmpZ->low3)) {
+				tmp->low4.z = tmpZ->low4.z;
+			} else {
+				tmp->low4.z = z;
+			}
+		}
+		tmp++;
+		tmpX++; tmpY++; tmpZ++;
+	}
+	}
+	}
+	
+	// set high4
+	tmp = blocks + blockcount - 1;
+	tmpX = tmp + sizeZ * sizeY;
+	tmpY = tmp + sizeZ;
+	tmpZ = tmp + 1;
+	for (x = sizeX - 1; x >= 0; x--) {
+	for (y = sizeY - 1; y >= 0; y--) {
+	for (z = sizeZ - 1; z >= 0; z--) {
+		if (x < sizeX - 1) {
+			// compare with next block in XG-dir.
+			if (POINTCMP(tmp->high3, ==, tmpX->high3)
+			 && POINTCMP(tmp->low3, ==, tmpX->low3)) {
+				tmp->high4.x = tmpX->high4.x;
+			} else {
+				tmp->high4.x = x;
+			}
+		}
+		if (y < sizeY - 1) {
+			// compare with neyt block in YG-dir.
+			if (POINTCMP(tmp->high3, ==, tmpY->high3)
+			 && POINTCMP(tmp->low3, ==, tmpY->low3)) {
+				tmp->high4.y = tmpY->high4.y;
+			} else {
+				tmp->high4.y = y;
+			}
+		}
+		if (z < sizeZ - 1) {
+			// compare with nezt block in ZG-dir.
+			if (POINTCMP(tmp->high3, ==, tmpZ->high3)
+			 && POINTCMP(tmp->low3, ==, tmpZ->low3)) {
+				tmp->high4.z = tmpZ->high4.z;
+			} else {
+				tmp->high4.z = z;
+			}
+		}
+		tmp--;
+		tmpX--; tmpY--; tmpZ--;
+	}
+	}
+	}
+
+	// search for chunks
+	tmp = blocks;
+	for (x = 0; x < sizeX; x++) {
+	for (y = 0; y < sizeY; y++) {
+	for (z = 0; z < sizeZ; z++) {
+		if (tmp->high4.x == x
+		 && tmp->high4.y == y
+		 && tmp->high4.z == z) {
+			total++;
+			printf("Chunk: %i/%i/%i  %i/%i/%i\n",
+				tmp->low4.x, tmp->low4.y, tmp->low4.z,
+				tmp->high4.x, tmp->high4.y, tmp->high4.z);
+			newChunk = chunkCreateBare(world);
+			newChunk->low.x = low.x + tmp->low4.x;
+			newChunk->low.y = low.y + tmp->low4.y;
+			newChunk->low.z = low.z + tmp->low4.z;
+			newChunk->high.x = low.x + tmp->high4.x;
+			newChunk->high.y = low.y + tmp->high4.y;
+			newChunk->high.z = low.z + tmp->high4.z;
+			/*chunkSizeX = tmp->high4.x - tmp->low4.x;
+			chunkSizeY = tmp->high4.y - tmp->low4.y;
+			chunkSizeZ = tmp->high4.z - tmp->low4.z;*/
+			chunkTagBlocks(blocks, sizeY, sizeZ,
+					tmp->low4, tmp->high4, newChunk);
+		}
+		tmp++;
+	}
+	}
+	}
+
+	printf("x y z | low   | high  | low2  | high2 | "
+			"low3  | high3 | chunk\n");
+	printf("------+-------+-------+-------+-------+-"
+			"------+-------+------\n");
 	tmp = blocks;
 	for (x = 0; x < sizeX; x++) {
 	for (y = 0; y < sizeY; y++) {
 	for (z = 0; z < sizeZ; z++) {
 		printf("%i %i %i | %i %i %i | %i %i %i | %i %i %i | %i %i %i"
-				" | %p\n",
+				" | %i %i %i | %i %i %i | %p\n",
 				x, y, z,
 				tmp->low.x, tmp->low.y, tmp->low.z,
 				tmp->high.x, tmp->high.y, tmp->high.z,
 				tmp->low2.x, tmp->low2.y, tmp->low2.z,
 				tmp->high2.x, tmp->high2.y, tmp->high2.z,
+				tmp->low3.x, tmp->low3.y, tmp->low3.z,
+				tmp->high3.x, tmp->high3.y, tmp->high3.z,
 				tmp->chunk);
 		tmp++;
 	}
@@ -331,6 +475,8 @@ void chunkCreateBatch(Metachunk *world, Point low, Point high) {
 	printf("Found %i chunks in %i blocks (%i%%)\n", total,
 			blockcount,
 			(int)((float)total / blockcount * 100));
+
+	printf("error: %i\n", error);
 
 	exit(EXIT_FAILURE);
 
@@ -346,9 +492,12 @@ Metachunk *chunkInit(Block *(*gen)(Point), Point pos) {
 	world->lastPos = (Point){0, 0, 0};  // unlikely position
 	world->lastChunk = NULL;
 
+	/*chunkCreateBatch(world,
+			(Point){pos.x-1, pos.y-0, pos.z-4},
+			(Point){pos.x+1, pos.y+3, pos.z+0});*/
 	chunkCreateBatch(world,
-			(Point){pos.x-2, pos.y-2, pos.z-2},
-			(Point){pos.x+1, pos.y+1, pos.z+1});
+			(Point){pos.x-4, pos.y-4, pos.z-4},
+			(Point){pos.x+5, pos.y+5, pos.z+5});
 
 	return world;
 }
