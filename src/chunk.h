@@ -15,7 +15,8 @@ typedef struct Chunk {
 
 typedef struct AnnotatedBlock {
 	Block *block;
-	Point3i low, high, low2, high2, low3, high3, low4, high4;
+	int lowx, lowy, highx, highy;
+	int low2x, low2y, high2x, high2y;
 	Chunk *chunk;
 } AnnotatedBlock;
 
