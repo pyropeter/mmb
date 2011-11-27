@@ -15,5 +15,5 @@ Coding Convention
 	multiple lines)
 * camelCase for variables/functions, SlightlyAltered for typedefs (following
 	the java convention of using capitalised class names)
-* lines are limited to 80 characters
+* lines are limited to 80 characters (with one tab counting as 8 chars)
 
