@@ -13,7 +13,6 @@
 static Render *render;
 static Camera *camera;
 static Metachunk *metachunk;
-static int frameNumber;
 
 void blockDrawDist(Block *block, Comp x_, Comp y_, Comp z_,
 		int distX, int distY, int distZ) {
@@ -170,8 +169,8 @@ void findChunks(Chunk *startChunk) {
 
 	Chunk **chunk = (Chunk**)startChunk->adjacent->mem;
 	for (; (void**)chunk != startChunk->adjacent->nextFree; chunk++) {
-		if ((*chunk)->lastRender != frameNumber) {
-			(*chunk)->lastRender = frameNumber;
+		if ((*chunk)->cookie != metachunk->cookie) {
+			(*chunk)->cookie = metachunk->cookie;
 			drawChunk(*chunk);
 
 			if ((*chunk)->blocks == NULL) // transparent block
@@ -181,12 +180,11 @@ void findChunks(Chunk *startChunk) {
 }
 
 void worldDrawChunked(void *foo) {
-	if (++frameNumber == 0)
-		frameNumber++;
+	metachunk->cookie++;
 
 	Chunk *startChunk = chunkGet(metachunk, (Point){camera->ix,
 			camera->iy, camera->iz});
-	startChunk->lastRender = frameNumber;
+	startChunk->cookie = metachunk->cookie;
 
 	findChunks(startChunk);
 }

@@ -11,6 +11,7 @@ typedef struct Point {
 	Comp x, y, z;
 } Point;
 #define POINTCMP(a,o,b) (a.x o b.x && a.y o b.y && a.z o b.z)
+#define POINTOP(a,o,b) ((Point){a.x o b.x, a.y o b.y, a.z o b.z})
 void pointPrint(Point point, char* tail);
 
 typedef struct Point3i {

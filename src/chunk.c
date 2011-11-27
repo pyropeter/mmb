@@ -10,7 +10,7 @@ static int error = 0;
 Chunk *chunkCreateBare(Metachunk *world) {
 	Chunk *chunk = knalloc(sizeof(Chunk));
 	chunk->status = 0;
-	chunk->lastRender = 0;
+	chunk->cookie = -1;
 
 	chunk->adjacent = listNew();
 	chunk->blocks = NULL;
@@ -25,7 +25,7 @@ Chunk *chunkCreateBare(Metachunk *world) {
 
 	Chunk *chunk = knalloc(sizeof(Chunk));
 	chunk->status = 0;
-	chunk->lastRender = 0;
+	chunk->cookie = -1;
 
 	chunk->adjacentCount = 0;
 	chunk->adjacent = knalloc(6 * sizeof(Chunk*));
@@ -44,6 +44,21 @@ Chunk *chunkCreateBare(Metachunk *world) {
 	listInsert(world->chunks, chunk);
 	return chunk;
 }*/
+
+ChunkGroup *newChunkGroup(Metachunk *world, Point low) {
+	ChunkGroup *chunkGroup = knalloc(sizeof(ChunkGroup));
+	listInsert(world->chunkGroups, chunkGroup);
+	
+	chunkGroup->low = low;
+	chunkGroup->chunksXS = listNew();
+	chunkGroup->chunksXG = listNew();
+	chunkGroup->chunksYS = listNew();
+	chunkGroup->chunksYG = listNew();
+	chunkGroup->chunksZS = listNew();
+	chunkGroup->chunksZG = listNew();
+	
+	return chunkGroup;
+}
 
 void chunkTagBlocks(AnnotatedBlock *blocks, int sizeY, int sizeZ, int z,
 		int lowx, int lowy, int highx, int highy, Chunk *chunk) {
@@ -79,8 +94,8 @@ void chunkTagBlocks(AnnotatedBlock *blocks, int sizeY, int sizeZ, int z,
 }
 
 void handleChunk(Metachunk *world, AnnotatedBlock *blocks,
-		int sizeY, int sizeZ, Point low, int z,
-		AnnotatedBlock *first) {
+		ChunkGroup *chunkGroup, int sizeX, int sizeY, int sizeZ,
+		Point low, int z, AnnotatedBlock *first) {
 	Chunk *chunk;
 	int chunkSizeX, chunkSizeY;
 
@@ -137,23 +152,73 @@ void handleChunk(Metachunk *world, AnnotatedBlock *blocks,
 
 	// add the chunks in ZS direction
 	if (z > 0) {
-		int cookie = -(first->low2x * sizeY + first->low2y + 1);
+		world->cookie++;
 		AnnotatedBlock *block;
 		int x,y;
 		for (x = first->low2x; x <= first->high2x; x++) {
 		for (y = first->low2y; y <= first->high2y; y++) {
 			block = blocks + x*sizeY*sizeZ + y*sizeZ + z - 1;
-			if (block->chunk->lastRender != cookie) {
+			if (block->chunk->cookie != world->cookie) {
 				listInsert(chunk->adjacent, block->chunk);
 				listInsert(block->chunk->adjacent, chunk);
-				block->chunk->lastRender = cookie;
+				block->chunk->cookie = world->cookie;
 			}
+		}
+		}
+	}
+	
+	// Add chunk to the ChunkGroup if neccessary
+	if (first->low2x == 0)
+		listInsert(chunkGroup->chunksXS, chunk);
+	if (first->low2y == 0)
+		listInsert(chunkGroup->chunksYS, chunk);
+	if (z == 0)
+		listInsert(chunkGroup->chunksZS, chunk);
+	if (first->high2x == sizeX - 1)
+		listInsert(chunkGroup->chunksXG, chunk);
+	if (first->high2y == sizeY - 1)
+		listInsert(chunkGroup->chunksYG, chunk);
+	if (z == sizeZ - 1)
+		listInsert(chunkGroup->chunksZG, chunk);
+}
+
+void mergeGroup(Metachunk *world, AnnotatedBlock *blocks, Point batchLow,
+		int sizeX, int sizeY, int sizeZ, List *chunks, int dir) {
+	Point3i p, low, high;
+	Chunk **chunk;
+	AnnotatedBlock *block;
+	
+	LISTITER(chunks, chunk, Chunk**) {
+		world->cookie++;
+		low.x = dir == DIR_XS ? 0 : (dir == DIR_XG ? sizeX - 1 :
+				(*chunk)->low.x - batchLow.x);
+		low.y = dir == DIR_YS ? 0 : (dir == DIR_YG ? sizeY - 1 :
+				(*chunk)->low.y - batchLow.y);
+		low.z = dir == DIR_ZS ? 0 : (dir == DIR_ZG ? sizeZ - 1 :
+				(*chunk)->low.z - batchLow.z);
+		high.x = dir == DIR_XS ? 0 : (dir == DIR_XG ? sizeX - 1 :
+				(*chunk)->high.x - batchLow.x);
+		high.y = dir == DIR_YS ? 0 : (dir == DIR_YG ? sizeY - 1 :
+				(*chunk)->high.y - batchLow.y);
+		high.z = dir == DIR_ZS ? 0 : (dir == DIR_ZG ? sizeZ - 1 :
+				(*chunk)->high.z - batchLow.z);
+		for (p.x = low.x; p.x <= high.x; p.x++) {
+		for (p.y = low.y; p.y <= high.y; p.y++) {
+		for (p.z = low.z; p.z <= high.z; p.z++) {
+			block = blocks + p.x*sizeY*sizeZ + p.y*sizeZ + p.z;
+			if (block->chunk->cookie != world->cookie) {
+				listInsert(block->chunk->adjacent, *chunk);
+				listInsert((*chunk)->adjacent, block->chunk);
+				block->chunk->cookie = world->cookie;
+			}
+		}
 		}
 		}
 	}
 }
 
-void chunkCreateBatch(Metachunk *world, Point low, Point high) {
+void chunkCreateBatch(Metachunk *world, Point low) {
+	Point high = POINTOP(low, +, world->groupSize);
 	int x,y,z;
 	int sizeX = high.x - low.x;
 	int sizeY = high.y - low.y;
@@ -163,6 +228,7 @@ void chunkCreateBatch(Metachunk *world, Point low, Point high) {
 	AnnotatedBlock *tmp, *tmpX, *tmpY;
 	int total = 0;
 	Point p;
+	ChunkGroup *chunkGroup = newChunkGroup(world, low);
 
 	// init: set some values to 0 or size[XYZ]-1
 	// the following loop is extremly stupid, but I can't think properly
@@ -328,8 +394,8 @@ void chunkCreateBatch(Metachunk *world, Point low, Point high) {
 			for (y = 0; y < sizeY; y++) {
 				if (tmp->low2x == x
 				 && tmp->low2y == y) {
-					handleChunk(world, blocks,
-							sizeY, sizeZ,
+					handleChunk(world, blocks, chunkGroup,
+							sizeX, sizeY, sizeZ,
 							low, z, tmp);
 					total++;
 				}
@@ -357,6 +423,35 @@ void chunkCreateBatch(Metachunk *world, Point low, Point high) {
 	}
 	}
 	printf("\n");*/
+	
+	// merge this ChunkGroup with adjacent ChunkGroups
+	ChunkGroup **otherGroup;
+	Point diff;
+	LISTITER(world->chunkGroups, otherGroup, ChunkGroup**) {
+		if (*otherGroup == chunkGroup)
+			continue;
+
+		diff = POINTOP((*otherGroup)->low, -, low);
+
+		if      (diff.x == -world->groupSize.x && !diff.y && !diff.z)
+			mergeGroup(world, blocks, low, sizeX, sizeY, sizeZ,
+					(*otherGroup)->chunksXS, DIR_XS);
+		else if (diff.x == world->groupSize.x && !diff.y && !diff.z)
+			mergeGroup(world, blocks, low, sizeX, sizeY, sizeZ,
+					(*otherGroup)->chunksXG, DIR_XG);
+		else if (!diff.x && diff.y == -world->groupSize.y && !diff.z)
+			mergeGroup(world, blocks, low, sizeX, sizeY, sizeZ,
+					(*otherGroup)->chunksYS, DIR_YS);
+		else if (!diff.x && diff.y == world->groupSize.y && !diff.z)
+			mergeGroup(world, blocks, low, sizeX, sizeY, sizeZ,
+					(*otherGroup)->chunksYG, DIR_YG);
+		else if (!diff.x && !diff.y && diff.z == -world->groupSize.z)
+			mergeGroup(world, blocks, low, sizeX, sizeY, sizeZ,
+					(*otherGroup)->chunksZS, DIR_ZS);
+		else if (!diff.x && !diff.y && diff.z == world->groupSize.z)
+			mergeGroup(world, blocks, low, sizeX, sizeY, sizeZ,
+					(*otherGroup)->chunksZG, DIR_ZG);
+	}
 
 	printf("chunk.c: Found %i chunks in %i blocks (%i%%); %i errors\n",
 			total,
@@ -369,13 +464,15 @@ void chunkCreateBatch(Metachunk *world, Point low, Point high) {
 
 Metachunk *chunkInit(Block *(*gen)(Point), Point pos) {
 	Metachunk *world = knalloc(sizeof(Metachunk));
+	world->cookie = 0;
 	world->chunks = listNew(sizeof(Chunk*));
+	world->chunkGroups = listNew(sizeof(ChunkGroup*));
+	world->groupSize = (Point3i){10, 10, 10};
 
 	world->generator = gen;
 
-	chunkCreateBatch(world,
-			(Point){pos.x-10, pos.y-10, pos.z-10},
-			(Point){pos.x+10, pos.y+10, pos.z+10});
+	chunkCreateBatch(world, (Point){pos.x-5, pos.y-5, pos.z-5});
+	chunkCreateBatch(world, (Point){pos.x+5, pos.y-5, pos.z-5});
 	/*chunkCreateBatch(world,
 			(Point){pos.x-4, pos.y-4, pos.z-4},
 			(Point){pos.x+5, pos.y+5, pos.z+5});*/

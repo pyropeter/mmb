@@ -3,10 +3,17 @@
 
 #include "defs.h"
 
+typedef struct ChunkGroup {
+	Point low;
+	List *chunksXS, *chunksXG;
+	List *chunksYS, *chunksYG;
+	List *chunksZS, *chunksZG;
+} ChunkGroup;
+
 typedef struct Chunk {
 	Point low, high;
 	int status;
-	int lastRender;
+	int cookie;
 
 	List *adjacent;
 
@@ -23,7 +30,11 @@ typedef struct AnnotatedBlock {
 typedef struct Metachunk {
 	Block *(*generator)(Point);
 
+	int cookie;
 	List *chunks;
+	
+	Point3i groupSize;
+	List *chunkGroups;
 
 	Chunk *lastChunk;
 	Point lastPos;
