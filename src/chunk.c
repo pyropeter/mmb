@@ -84,10 +84,10 @@ void handleChunk(Metachunk *world, AnnotatedBlock *blocks,
 	Chunk *chunk;
 	int chunkSizeX, chunkSizeY;
 
-	printf("Chunk: %2i %2i/%2i  %2i/%2i\n",
+	/*printf("Chunk: %2i %2i/%2i  %2i/%2i\n",
 		z,
 		first->low2x, first->low2y,
-		first->high2x, first->high2y);
+		first->high2x, first->high2y);*/
 
 	chunk = chunkCreateBare(world);
 
@@ -137,15 +137,16 @@ void handleChunk(Metachunk *world, AnnotatedBlock *blocks,
 
 	// add the chunks in ZS direction
 	if (z > 0) {
+		int cookie = -(first->low2x * sizeY + first->low2y + 1);
 		AnnotatedBlock *block;
 		int x,y;
 		for (x = first->low2x; x <= first->high2x; x++) {
 		for (y = first->low2y; y <= first->high2y; y++) {
 			block = blocks + x*sizeY*sizeZ + y*sizeZ + z - 1;
-			if (block->chunk->lastRender != -1) {
+			if (block->chunk->lastRender != cookie) {
 				listInsert(chunk->adjacent, block->chunk);
 				listInsert(block->chunk->adjacent, chunk);
-				block->chunk->lastRender = -1;
+				block->chunk->lastRender = cookie;
 			}
 		}
 		}
@@ -189,7 +190,7 @@ void chunkCreateBatch(Metachunk *world, Point low, Point high) {
 	}
 	}
 	}
-	for (p.y = low.y; p.y < high.y; p.y++) {
+	/*for (p.y = low.y; p.y < high.y; p.y++) {
 		printf("y = %2i:\n", p.y - low.y);
 		for (p.z = high.z - 1; p.z >= low.z; p.z--) {
 			printf("%2i |", p.z - low.z);
@@ -201,7 +202,7 @@ void chunkCreateBatch(Metachunk *world, Point low, Point high) {
 		printf("---+--------------------------------\n");
 		printf(" z | x 1 2 3 4 5 6 7 8 9 a b c d e f\n");
 		printf("\n");
-	}
+	}*/
 
 	// set high
 	tmp = blocks + blockcount - 1;
@@ -337,7 +338,7 @@ void chunkCreateBatch(Metachunk *world, Point low, Point high) {
 		}
 	}
 
-	printf(" x  y  z | low   | hig   | lo2   | hi2   | chunk\n");
+	/*printf(" x  y  z | low   | hig   | lo2   | hi2   | chunk\n");
 	printf("---------+-------+-------+-------+-------+------\n");
 	tmp = blocks;
 	for (x = 0; x < sizeX; x++) {
@@ -355,9 +356,9 @@ void chunkCreateBatch(Metachunk *world, Point low, Point high) {
 	}
 	}
 	}
-	printf("\n");
+	printf("\n");*/
 
-	printf("Found %i chunks in %i blocks (%i%%); %i errors\n",
+	printf("chunk.c: Found %i chunks in %i blocks (%i%%); %i errors\n",
 			total,
 			blockcount,
 			(int)((float)total / blockcount * 100),
