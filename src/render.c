@@ -202,7 +202,7 @@ Render *renderInit(int argc, char *argv[]) {
 
 	render.mouseSens = 1.0/1000;
 
-	render.camera.range = 4;
+	render.camera.range = 100;
 	moveCamera(HALFCOMP, HALFCOMP + 1, HALFCOMP);
 	rotateCamera(2.5, 1.0);
 
@@ -211,7 +211,7 @@ Render *renderInit(int argc, char *argv[]) {
 	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE,
 			GLUT_ACTION_CONTINUE_EXECUTION);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
-	glutInitWindowSize(400, 400);
+	glutInitWindowSize(640, 480);
 	render.window = glutCreateWindow("Mmb " VERSION);
 
 	glEnable(GL_DEPTH_TEST);

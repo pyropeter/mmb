@@ -48,6 +48,7 @@ Chunk *chunkCreateBare(Metachunk *world) {
 void chunkTagBlocks(AnnotatedBlock *blocks, int sizeY, int sizeZ, int z,
 		int lowx, int lowy, int highx, int highy, Chunk *chunk) {
 	AnnotatedBlock *block;
+	int blocksIndex = 0;
 	int x,y;
 	for (x = lowx; x <= highx; x++) {
 	for (y = lowy; y <= highy; y++) {
@@ -69,8 +70,85 @@ void chunkTagBlocks(AnnotatedBlock *blocks, int sizeY, int sizeZ, int z,
 			error++;
 		}
 		block->chunk = chunk;
+		if (chunk->blocks != NULL) {
+			chunk->blocks[blocksIndex++] = block->block;
+		}
 		//printf("----\n");
 	}
+	}
+}
+
+void handleChunk(Metachunk *world, AnnotatedBlock *blocks,
+		int sizeY, int sizeZ, Point low, int z,
+		AnnotatedBlock *first) {
+	Chunk *chunk;
+	int chunkSizeX, chunkSizeY;
+
+	printf("Chunk: %2i %2i/%2i  %2i/%2i\n",
+		z,
+		first->low2x, first->low2y,
+		first->high2x, first->high2y);
+
+	chunk = chunkCreateBare(world);
+
+	// set low and high points of the new chunk
+	chunk->low.x = low.x + first->low2x;
+	chunk->low.y = low.y + first->low2y;
+	chunk->low.z = low.z + z;
+	chunk->high.x = low.x + first->high2x;
+	chunk->high.y = low.y + first->high2y;
+	chunk->high.z = low.z + z;
+
+	// transparent or not?
+	// allocate memory for block pointers
+	if (*(first->block) == ' ') {
+		chunk->blocks = NULL;
+	} else {
+		chunkSizeX = first->high2x - first->low2x + 1;
+		chunkSizeY = first->high2y - first->low2y + 1;
+		chunk->blocks = knalloc(
+				chunkSizeX * chunkSizeY * 1
+				* sizeof(Block*));
+	}
+
+	// add blocks to the chunk
+	chunkTagBlocks(blocks, sizeY, sizeZ, z,
+			first->low2x, first->low2y,
+			first->high2x, first->high2y,
+			chunk);
+
+	// Handle adjacent chunks:
+	// Only the chunks in XS, YS and ZS direction are relevant, the others
+	// are not yet generated.
+	// There is always only one adjacent chunk in X and one in Y direction
+	// (this is one property of the chunk generating algorithm).
+	// In the Z direction the number of adjacent chunks is between one and
+	// the number of blocks in the current chunk.
+	
+	// add the chunks in XS and YS direction
+	if (first->low2x > 0) {
+		listInsert(chunk->adjacent, (first - sizeY * sizeZ)->chunk);
+		listInsert((first - sizeY * sizeZ)->chunk->adjacent, chunk);
+	}
+	if (first->low2y > 0) {
+		listInsert(chunk->adjacent, (first - sizeZ)->chunk);
+		listInsert((first - sizeZ)->chunk->adjacent, chunk);
+	}
+
+	// add the chunks in ZS direction
+	if (z > 0) {
+		AnnotatedBlock *block;
+		int x,y;
+		for (x = first->low2x; x <= first->high2x; x++) {
+		for (y = first->low2y; y <= first->high2y; y++) {
+			block = blocks + x*sizeY*sizeZ + y*sizeZ + z - 1;
+			if (block->chunk->lastRender != -1) {
+				listInsert(chunk->adjacent, block->chunk);
+				listInsert(block->chunk->adjacent, chunk);
+				block->chunk->lastRender = -1;
+			}
+		}
+		}
 	}
 }
 
@@ -82,8 +160,6 @@ void chunkCreateBatch(Metachunk *world, Point low, Point high) {
 	int blockcount = sizeX * sizeY * sizeZ;
 	AnnotatedBlock *blocks = knalloc(blockcount * sizeof(AnnotatedBlock));
 	AnnotatedBlock *tmp, *tmpX, *tmpY;
-	Chunk *newChunk;
-	//int chunkSizeX, chunkSizeY, chunkSizeZ;
 	int total = 0;
 	Point p;
 
@@ -243,44 +319,32 @@ void chunkCreateBatch(Metachunk *world, Point low, Point high) {
 	}
 
 	// search for chunks
-	tmp = blocks;
-	for (x = 0; x < sizeX; x++) {
-	for (y = 0; y < sizeY; y++) {
+	// It is important to loop through the Z direction first, because
+	// handleChunk needs the chunks in ZS direction to be generated.
 	for (z = 0; z < sizeZ; z++) {
-		if (tmp->low2x == x
-		 && tmp->low2y == y) {
-			total++;
-			printf("Chunk: %i %i/%i  %i/%i\n",
-				z,
-				tmp->low2x, tmp->low2y,
-				tmp->high2x, tmp->high2y);
-			newChunk = chunkCreateBare(world);
-			newChunk->low.x = low.x + tmp->low2x;
-			newChunk->low.y = low.y + tmp->low2y;
-			newChunk->low.z = low.z + z;
-			newChunk->high.x = low.x + tmp->high2x;
-			newChunk->high.y = low.y + tmp->high2y;
-			newChunk->high.z = low.z + z;
-			//chunkSizeX = tmp->high4.x - tmp->low4.x;
-			//chunkSizeY = tmp->high4.y - tmp->low4.y;
-			//chunkSizeZ = tmp->high4.z - tmp->low4.z;
-			chunkTagBlocks(blocks, sizeY, sizeZ, z,
-					tmp->low2x, tmp->low2y,
-					tmp->high2x, tmp->high2y,
-					newChunk);
+		tmp = blocks + z;
+		for (x = 0; x < sizeX; x++) {
+			for (y = 0; y < sizeY; y++) {
+				if (tmp->low2x == x
+				 && tmp->low2y == y) {
+					handleChunk(world, blocks,
+							sizeY, sizeZ,
+							low, z, tmp);
+					total++;
+				}
+				tmp += sizeZ;
+			}
 		}
-		tmp++;
-	}
-	}
 	}
 
-	printf("x y z | low | hig | lo2 | hi2 | chunk\n");
-	printf("------+-----+-----+-----+-----+------\n");
+	printf(" x  y  z | low   | hig   | lo2   | hi2   | chunk\n");
+	printf("---------+-------+-------+-------+-------+------\n");
 	tmp = blocks;
 	for (x = 0; x < sizeX; x++) {
 	for (y = 0; y < sizeY; y++) {
 	for (z = 0; z < sizeZ; z++) {
-		printf("%i %i %i | %i %i | %i %i | %i %i | %i %i | %p\n",
+		printf("%2i %2i %2i | %2i %2i | %2i %2i | "
+				"%2i %2i | %2i %2i | %p\n",
 				x, y, z,
 				tmp->lowx, tmp->lowy,
 				tmp->highx, tmp->highy,
@@ -293,13 +357,11 @@ void chunkCreateBatch(Metachunk *world, Point low, Point high) {
 	}
 	printf("\n");
 
-	printf("Found %i chunks in %i blocks (%i%%)\n", total,
+	printf("Found %i chunks in %i blocks (%i%%); %i errors\n",
+			total,
 			blockcount,
-			(int)((float)total / blockcount * 100));
-
-	printf("error: %i\n", error);
-
-	exit(EXIT_FAILURE);
+			(int)((float)total / blockcount * 100),
+			error);
 
 	return;
 }
@@ -310,18 +372,19 @@ Metachunk *chunkInit(Block *(*gen)(Point), Point pos) {
 
 	world->generator = gen;
 
-	world->lastPos = (Point){0, 0, 0};  // unlikely position
-	world->lastChunk = NULL;
-
 	chunkCreateBatch(world,
 			(Point){pos.x-10, pos.y-10, pos.z-10},
 			(Point){pos.x+10, pos.y+10, pos.z+10});
 	/*chunkCreateBatch(world,
 			(Point){pos.x-4, pos.y-4, pos.z-4},
 			(Point){pos.x+5, pos.y+5, pos.z+5});*/
-	chunkCreateBatch(world,
+	/*chunkCreateBatch(world,
 			(Point){pos.x-2, pos.y-2, pos.z-2},
-			(Point){pos.x+1, pos.y+1, pos.z+1});
+			(Point){pos.x+1, pos.y+1, pos.z+1});*/
+
+	world->lastChunk = *(world->chunks->mem);
+	world->lastPos = (Point){0,0,0};
+	chunkGet(world, pos); // sets lastChunk and lastPos to usefull values
 
 	return world;
 }
