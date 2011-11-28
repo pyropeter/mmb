@@ -85,8 +85,8 @@ void blockDrawDist(Block *block, Comp x_, Comp y_, Comp z_,
 }
 
 void drawChunk(Chunk *chunk) {
-	// draw chunk's bounding rectangle as wireframe
-	
+/*	// draw chunk's bounding rectangle as wireframe
+
 	int x1 = (long long int)chunk->low.x - HALFCOMP;
 	int y1 = (long long int)chunk->low.y - HALFCOMP;
 	int z1 = (long long int)chunk->low.z - HALFCOMP;
@@ -124,7 +124,7 @@ void drawChunk(Chunk *chunk) {
 		glVertex3f(x2, y2, z2);
 	}; glEnd();
 	glEnable(GL_LIGHTING);
-
+*/
 	if (chunk->blocks == NULL)
 		return;
 
@@ -161,16 +161,17 @@ int isVisible(Chunk *chunk) {
 }
 
 void findChunks(Chunk *startChunk) {
-	// out of range?
-	if (!isVisible(startChunk))
-		return;
-
 	chunkUpdate(metachunk, startChunk);
 
 	Chunk **chunk = (Chunk**)startChunk->adjacent->mem;
 	for (; (void**)chunk != startChunk->adjacent->nextFree; chunk++) {
 		if ((*chunk)->cookie != metachunk->cookie) {
 			(*chunk)->cookie = metachunk->cookie;
+
+			// out of range?
+			if (!isVisible(*chunk))
+				continue;
+
 			drawChunk(*chunk);
 
 			if ((*chunk)->blocks == NULL) // transparent block

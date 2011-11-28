@@ -219,7 +219,7 @@ void mergeGroup(Metachunk *world, AnnotatedBlock *blocks, Point batchLow,
 		for (p.z = low.z; p.z <= high.z; p.z++) {
 			block = blocks + p.x*sizeY*sizeZ + p.y*sizeZ + p.z;
 			if (block->chunk->cookie != world->cookie) {
-				block->chunk->status &= !dir;
+				block->chunk->status &= ~dir;
 				listInsert(block->chunk->adjacent, *chunk);
 				listInsert((*chunk)->adjacent, block->chunk);
 				block->chunk->cookie = world->cookie;
@@ -227,7 +227,7 @@ void mergeGroup(Metachunk *world, AnnotatedBlock *blocks, Point batchLow,
 		}
 		}
 		}
-		(*chunk)->status &= !DIR_OPPOSITE(dir);
+		(*chunk)->status &= ~DIR_OPPOSITE(dir);
 	}
 }
 
@@ -483,7 +483,7 @@ Metachunk *chunkInit(Block *(*gen)(Point), Point pos) {
 	world->cookie = 0;
 	world->chunks = listNew(sizeof(Chunk*));
 	world->chunkGroups = listNew(sizeof(ChunkGroup*));
-	world->groupSize = (Point3i){8, 8, 8};
+	world->groupSize = (Point3i){10, 10, 10};
 
 	world->generator = gen;
 
