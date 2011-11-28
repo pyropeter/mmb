@@ -187,6 +187,8 @@ void worldDrawChunked(void *foo) {
 	startChunk->cookie = metachunk->cookie;
 
 	findChunks(startChunk);
+	chunkAfterFrame(metachunk);
+	fflush(stdout);
 }
 
 int main(int argc, char *argv[]) {

@@ -38,10 +38,14 @@ typedef struct Metachunk {
 
 	Chunk *lastChunk;
 	Point lastPos;
+	
+	// chunkUpdate
+	Chunk *chunkToUpdate;
 } Metachunk;
 
 extern Metachunk *chunkInit(Block *(*gen)(Point), Point pos);
 extern Chunk *chunkGet(Metachunk *world, Point pos);
 extern void chunkUpdate(Metachunk *world, Chunk *chunk);
+extern void chunkAfterFrame(Metachunk *world);
 
 #endif /* _MMB_CHUNK_H */

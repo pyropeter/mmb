@@ -219,8 +219,7 @@ void mergeGroup(Metachunk *world, AnnotatedBlock *blocks, Point batchLow,
 		for (p.z = low.z; p.z <= high.z; p.z++) {
 			block = blocks + p.x*sizeY*sizeZ + p.y*sizeZ + p.z;
 			if (block->chunk->cookie != world->cookie) {
-				block->chunk->status -= dir;
-				(*chunk)->status -= DIR_OPPOSITE(dir);
+				block->chunk->status &= !dir;
 				listInsert(block->chunk->adjacent, *chunk);
 				listInsert((*chunk)->adjacent, block->chunk);
 				block->chunk->cookie = world->cookie;
@@ -228,6 +227,7 @@ void mergeGroup(Metachunk *world, AnnotatedBlock *blocks, Point batchLow,
 		}
 		}
 		}
+		(*chunk)->status &= !DIR_OPPOSITE(dir);
 	}
 }
 
@@ -450,29 +450,30 @@ void chunkCreateBatch(Metachunk *world, Point low) {
 
 		if      (ndiff.x == world->groupSize.x && !diff.y && !diff.z)
 			mergeGroup(world, blocks, low, sizeX, sizeY, sizeZ,
-					(*otherGroup)->chunksXS, DIR_XS);
+					(*otherGroup)->chunksXG, DIR_XS);
 		else if (diff.x == world->groupSize.x && !diff.y && !diff.z)
 			mergeGroup(world, blocks, low, sizeX, sizeY, sizeZ,
-					(*otherGroup)->chunksXG, DIR_XG);
+					(*otherGroup)->chunksXS, DIR_XG);
 		else if (!diff.x && ndiff.y == world->groupSize.y && !diff.z)
 			mergeGroup(world, blocks, low, sizeX, sizeY, sizeZ,
-					(*otherGroup)->chunksYS, DIR_YS);
+					(*otherGroup)->chunksYG, DIR_YS);
 		else if (!diff.x && diff.y == world->groupSize.y && !diff.z)
 			mergeGroup(world, blocks, low, sizeX, sizeY, sizeZ,
-					(*otherGroup)->chunksYG, DIR_YG);
+					(*otherGroup)->chunksYS, DIR_YG);
 		else if (!diff.x && !diff.y && ndiff.z == world->groupSize.z)
 			mergeGroup(world, blocks, low, sizeX, sizeY, sizeZ,
-					(*otherGroup)->chunksZS, DIR_ZS);
+					(*otherGroup)->chunksZG, DIR_ZS);
 		else if (!diff.x && !diff.y && diff.z == world->groupSize.z)
 			mergeGroup(world, blocks, low, sizeX, sizeY, sizeZ,
-					(*otherGroup)->chunksZG, DIR_ZG);
+					(*otherGroup)->chunksZS, DIR_ZG);
 	}
 
-	printf("chunk.c: Found %i chunks in %i blocks (%i%%); %i errors\n",
+	printf("chunk.c: Found %i chunks in %i blocks (%i%%); %i errors; ",
 			total,
 			blockcount,
 			(int)((float)total / blockcount * 100),
 			error);
+	pointPrint(low, "\n");
 
 	return;
 }
@@ -482,13 +483,15 @@ Metachunk *chunkInit(Block *(*gen)(Point), Point pos) {
 	world->cookie = 0;
 	world->chunks = listNew(sizeof(Chunk*));
 	world->chunkGroups = listNew(sizeof(ChunkGroup*));
-	world->groupSize = (Point3i){10, 10, 10};
+	world->groupSize = (Point3i){8, 8, 8};
 
 	world->generator = gen;
 
 	world->lastChunk = *(world->chunks->mem);
 	world->lastPos = (Point){0,0,0};
 	chunkGet(world, pos); // sets lastChunk and lastPos to usefull values
+
+	world->chunkToUpdate = NULL;
 
 	return world;
 }
@@ -552,7 +555,40 @@ Chunk *chunkGet(Metachunk *world, Point pos) {
 }
 
 void chunkUpdate(Metachunk *world, Chunk *chunk) {
-	return;
+	if (world->chunkToUpdate != NULL || chunk->status == 0)
+		return;
+
+	world->chunkToUpdate = chunk;
+}
+
+void chunkAfterFrame(Metachunk *world) {
+	if (world->chunkToUpdate == NULL)
+		return;
+
+	Point p = POINTOP(world->chunkToUpdate->low, /, world->groupSize);
+	p = POINTOP(p, *, world->groupSize);
+
+	Point pos = POINTOP(world->chunkToUpdate->low, /, world->groupSize);
+
+	if      (world->chunkToUpdate->status & DIR_XG)
+		pos.x++;
+	else if (world->chunkToUpdate->status & DIR_XS)
+		pos.x--;
+	else if (world->chunkToUpdate->status & DIR_YG)
+		pos.y++;
+	else if (world->chunkToUpdate->status & DIR_YS)
+		pos.y--;
+	else if (world->chunkToUpdate->status & DIR_ZG)
+		pos.z++;
+	else if (world->chunkToUpdate->status & DIR_ZS)
+		pos.z--;
+	else
+		exit(EXIT_FAILURE);
+
+	pos = POINTOP(pos, *, world->groupSize);
+	chunkCreateBatch(world, pos);
+
+	world->chunkToUpdate = NULL;
 }
 
 /*void chunkUpdate(Metachunk *world, Chunk *chunk) {
