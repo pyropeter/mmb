@@ -140,6 +140,14 @@ void onKeyboard(unsigned char key, int x, int y) {
 		case 'i':
 			renderDebug();
 			break;
+		case '+':
+			render.camera.range += 1;
+			moveCamera(0,0,0);
+			break;
+		case '-':
+			render.camera.range -= 1;
+			moveCamera(0,0,0);
+			break;
 		default:
 			printf("No mapping for key %i\n", key);
 			break;
@@ -201,7 +209,7 @@ Render *renderInit(int argc, char *argv[]) {
 
 	render.mouseSens = 1.0/1000;
 
-	render.camera.range = 20;
+	render.camera.range = 10;
 	moveCamera(HALFCOMP, HALFCOMP + 2, HALFCOMP);
 	rotateCamera(2.5, 1.0);
 
