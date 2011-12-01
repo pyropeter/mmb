@@ -1,11 +1,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 #include "defs.h"
 #include "chunk.h"
-
-static int error = 0;
 
 Chunk *chunkCreateBare(Metachunk *world) {
 	Chunk *chunk = knalloc(sizeof(Chunk));
@@ -68,27 +67,15 @@ void chunkTagBlocks(AnnotatedBlock *blocks, int sizeY, int sizeZ, int z,
 	for (x = lowx; x <= highx; x++) {
 	for (y = lowy; y <= highy; y++) {
 		block = blocks + x*sizeY*sizeZ + y*sizeZ + z;
-		if (block->chunk != NULL) {
-			printf("FUUUUUUUUUUUU\n");
-			error++;
-		}
-		if (block->high2x != highx || block->high2y != highy) {
-			printf("wrong high: %i %i\n",
-					block->high2x,
-					block->high2y);
-			error++;
-		}
-		if (block->low2x != lowx || block->low2y != lowy) {
-			printf("wrong  low: %i %i\n",
-					block->low2x,
-					block->low2y);
-			error++;
-		}
+
+		assert(block->chunk == NULL);
+		assert(block->high2x == highx && block->high2y == highy);
+		assert(block->low2x == lowx && block->low2y == lowy);
+
 		block->chunk = chunk;
 		if (chunk->blocks != NULL) {
 			chunk->blocks[blocksIndex++] = block->block;
 		}
-		//printf("----\n");
 	}
 	}
 }
@@ -468,11 +455,10 @@ void chunkCreateBatch(Metachunk *world, Point low) {
 					(*otherGroup)->chunksZS, DIR_ZG);
 	}
 
-	printf("chunk.c: Found %i chunks in %i blocks (%i%%); %i errors; ",
+	printf("chunk.c: Found %i chunks in %i blocks (%i%%): ",
 			total,
 			blockcount,
-			(int)((float)total / blockcount * 100),
-			error);
+			(int)((float)total / blockcount * 100));
 	pointPrint(low, "\n");
 
 	return;
