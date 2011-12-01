@@ -45,6 +45,5 @@ extern void **listSearch(List *list, void *element);
 
 extern long startTimer();
 extern long stopTimer(long start);
-extern void explode();
 
 #endif /* _MMB_DEFS_H */
