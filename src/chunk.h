@@ -1,3 +1,7 @@
+/**
+ * @file
+ */
+
 #ifndef _MMB_CHUNK_H
 #define _MMB_CHUNK_H
 
@@ -43,7 +47,7 @@ typedef struct Metachunk {
 	Chunk *chunkToUpdate;
 } Metachunk;
 
-extern Metachunk *chunkInit(Block *(*gen)(Point), Point pos);
+extern Metachunk *chunkInit(Block *(*gen)(Point));
 extern Chunk *chunkGet(Metachunk *world, Point pos);
 extern void chunkUpdate(Metachunk *world, Chunk *chunk);
 extern void chunkAfterFrame(Metachunk *world);

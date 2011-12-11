@@ -9,6 +9,12 @@ CC = gcc
 CFLAGS = -Wall -g -DVERSION='"$(VERSION)"' -pg
 LIBS = -lGL -lGLU -lglut -lm
 
+# for stable releases
+# * disable symbols?
+# * disable profiling
+# * disable assertions
+#CFLAGS = -Wall -DVERSION='"$(VERSION)"' -DNDEBUG=1
+
 SRCS = src/render.c src/generator.c src/main.c src/chunk.c src/defs.c
 MAIN = mmb
 

@@ -1,3 +1,7 @@
+/**
+ * @file
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -17,32 +21,6 @@ Chunk *chunkCreateBare(Metachunk *world) {
 	listInsert(world->chunks, chunk);
 	return chunk;
 }
-
-/*Chunk *chunkCreate(Metachunk *world, Point pos) {
-	//printf("chunkCreate(): ");
-	//pointPrint(pos, "\n");
-
-	Chunk *chunk = knalloc(sizeof(Chunk));
-	chunk->status = 0;
-	chunk->cookie = -1;
-
-	chunk->adjacentCount = 0;
-	chunk->adjacent = knalloc(6 * sizeof(Chunk*));
-
-	chunk->low = pos;
-	chunk->high = pos;
-
-	Block *block = world->generator(pos);
-	if (*block == ' ') {
-		chunk->blocks = NULL;
-	} else {
-		chunk->blocks = knalloc(sizeof(Block*));
-		chunk->blocks[0] = block;
-	}
-
-	listInsert(world->chunks, chunk);
-	return chunk;
-}*/
 
 ChunkGroup *newChunkGroup(Metachunk *world, Point low) {
 	ChunkGroup *chunkGroup = knalloc(sizeof(ChunkGroup));
@@ -231,9 +209,6 @@ void chunkCreateBatch(Metachunk *world, Point low) {
 	Point p;
 	ChunkGroup *chunkGroup = newChunkGroup(world, low);
 
-	// init: set some values to 0 or size[XYZ]-1
-	// the following loop is extremly stupid, but I can't think properly
-	// at the moment and I really want to know if the 1st pass loop works
 	tmp = blocks;
 	for (x = 0; x < sizeX; x++) {
 	for (y = 0; y < sizeY; y++) {
@@ -257,19 +232,6 @@ void chunkCreateBatch(Metachunk *world, Point low) {
 	}
 	}
 	}
-	/*for (p.y = low.y; p.y < high.y; p.y++) {
-		printf("y = %2i:\n", p.y - low.y);
-		for (p.z = high.z - 1; p.z >= low.z; p.z--) {
-			printf("%2i |", p.z - low.z);
-			for (p.x = low.x; p.x < high.x; p.x++) {
-				printf(" %c", *(world->generator(p)));
-			}
-			printf(" |\n");
-		}
-		printf("---+--------------------------------\n");
-		printf(" z | x 1 2 3 4 5 6 7 8 9 a b c d e f\n");
-		printf("\n");
-	}*/
 
 	// set high
 	tmp = blocks + blockcount - 1;
@@ -404,26 +366,6 @@ void chunkCreateBatch(Metachunk *world, Point low) {
 			}
 		}
 	}
-
-	/*printf(" x  y  z | low   | hig   | lo2   | hi2   | chunk\n");
-	printf("---------+-------+-------+-------+-------+------\n");
-	tmp = blocks;
-	for (x = 0; x < sizeX; x++) {
-	for (y = 0; y < sizeY; y++) {
-	for (z = 0; z < sizeZ; z++) {
-		printf("%2i %2i %2i | %2i %2i | %2i %2i | "
-				"%2i %2i | %2i %2i | %p\n",
-				x, y, z,
-				tmp->lowx, tmp->lowy,
-				tmp->highx, tmp->highy,
-				tmp->low2x, tmp->low2y,
-				tmp->high2x, tmp->high2y,
-				tmp->chunk);
-		tmp++;
-	}
-	}
-	}
-	printf("\n");*/
 	
 	// merge this ChunkGroup with adjacent ChunkGroups
 	ChunkGroup **otherGroup;
@@ -464,7 +406,12 @@ void chunkCreateBatch(Metachunk *world, Point low) {
 	return;
 }
 
-Metachunk *chunkInit(Block *(*gen)(Point), Point pos) {
+/**
+ * Creates and initializes a metachunk
+ * 
+ * @param gen		A block generator function
+ */
+Metachunk *chunkInit(Block *(*gen)(Point)) {
 	Metachunk *world = knalloc(sizeof(Metachunk));
 	world->cookie = 0;
 	world->chunks = listNew(sizeof(Chunk*));
@@ -473,61 +420,54 @@ Metachunk *chunkInit(Block *(*gen)(Point), Point pos) {
 
 	world->generator = gen;
 
-	world->lastChunk = *(world->chunks->mem);
-	world->lastPos = (Point){0,0,0};
-	chunkGet(world, pos); // sets lastChunk and lastPos to usefull values
+	world->lastChunk = NULL;
 
 	world->chunkToUpdate = NULL;
 
 	return world;
 }
 
+/**
+ * Returns the chunk at position pos
+ * 
+ * If no chunk at that position exists, it is generated and returned.
+ */
 Chunk *chunkGet(Metachunk *world, Point pos) {
-	// check if position has changed at all
-	if (POINTCMP(world->lastPos, ==, pos))
-		return world->lastChunk;
-
-	// check if point is still in last chunk
-	if (POINTCMP(world->lastChunk->low, <=, pos) &&
-			POINTCMP(world->lastChunk->high, >=, pos)) {
-		world->lastPos = pos;
-		return world->lastChunk;
-	}
-
-	// check chunks adjacent to the chunks adjacent to the last chunk
-	Chunk **middle, **adjacent;
-	LISTITER(world->lastChunk->adjacent, middle, Chunk**) {
-		LISTITER((*middle)->adjacent, adjacent, Chunk**) {
-			if (POINTCMP((*adjacent)->low, <=, pos)
-			 && POINTCMP((*adjacent)->high, >=, pos)) {
-				world->lastChunk = *adjacent;
-				world->lastPos = pos;
-				return *adjacent;
-			}
-		}
-	}
-/*	int i, j;
-	for (i = 0; i < world->lastChunk->adjacentCount; i++) {
-		Chunk *middle = world->lastChunk->adjacent[i];
-		for (j = 0; j < middle->adjacentCount; j++) {
-			Chunk *adjacent = middle->adjacent[j];
-			if (POINTCMP(adjacent->low, <=, pos) &&
-					POINTCMP(adjacent->high, >=, pos)) {
-				world->lastChunk = adjacent;
-				world->lastPos = pos;
-				return adjacent;
-			}
-		}
-	}*/
-
-	// just check all chunks (boring, slow but simple approach)
-	Chunk **chunk = (Chunk**)world->chunks->mem;
-	for (; (void**)chunk != world->chunks->nextFree; chunk++) {
-		if (POINTCMP((*chunk)->low, <=, pos) &&
-				POINTCMP((*chunk)->high, >=, pos)) {
-			world->lastPos = pos;
-			world->lastChunk = *chunk;
+	if (world->lastChunk) {
+		// check if position has changed at all
+		if (POINTCMP(world->lastPos, ==, pos))
 			return world->lastChunk;
+
+		// check if point is still in last chunk
+		if (POINTCMP(world->lastChunk->low, <=, pos) &&
+				POINTCMP(world->lastChunk->high, >=, pos)) {
+			world->lastPos = pos;
+			return world->lastChunk;
+		}
+
+		// check chunks adjacent to the chunks adjacent to the
+		// last chunk
+		Chunk **middle, **adjacent;
+		LISTITER(world->lastChunk->adjacent, middle, Chunk**) {
+			LISTITER((*middle)->adjacent, adjacent, Chunk**) {
+				if (POINTCMP((*adjacent)->low, <=, pos)
+				 && POINTCMP((*adjacent)->high, >=, pos)) {
+					world->lastChunk = *adjacent;
+					world->lastPos = pos;
+					return *adjacent;
+				}
+			}
+		}
+
+		// just check all chunks (boring, slow but simple approach)
+		Chunk **chunk;
+		LISTITER(world->chunks, chunk, Chunk**) {
+			if (POINTCMP((*chunk)->low, <=, pos) &&
+					POINTCMP((*chunk)->high, >=, pos)) {
+				world->lastPos = pos;
+				world->lastChunk = *chunk;
+				return world->lastChunk;
+			}
 		}
 	}
 
@@ -535,11 +475,19 @@ Chunk *chunkGet(Metachunk *world, Point pos) {
 	Point batchPos = POINTOP(pos, /, world->groupSize);
 	batchPos = POINTOP(batchPos, *, world->groupSize);
 	chunkCreateBatch(world, batchPos);
+	
 	world->lastChunk = *(world->chunks->mem);
 	world->lastPos = (Point){0,0,0};
 	return chunkGet(world, pos);
 }
 
+/**
+ * Marks a chunk for updating by chunkAfterFrame()
+ * 
+ * The real updating is done by chunkAfterFrame(). Only the first chunk with
+ * missing adjacent chunks is marked. This ensures that only one ChunkGroup
+ * is generated every frame (to limit the lag).
+ */
 void chunkUpdate(Metachunk *world, Chunk *chunk) {
 	if (world->chunkToUpdate != NULL || chunk->status == 0)
 		return;
@@ -547,15 +495,17 @@ void chunkUpdate(Metachunk *world, Chunk *chunk) {
 	world->chunkToUpdate = chunk;
 }
 
+/**
+ * Updates the chunk marked by chunkUpdate()
+ * 
+ * This generates one ChunkGroup adjacent to the marked chunk.
+ */
 void chunkAfterFrame(Metachunk *world) {
 	if (world->chunkToUpdate == NULL)
 		return;
 
-	Point p = POINTOP(world->chunkToUpdate->low, /, world->groupSize);
-	p = POINTOP(p, *, world->groupSize);
-
 	Point pos = POINTOP(world->chunkToUpdate->low, /, world->groupSize);
-
+	
 	if      (world->chunkToUpdate->status & DIR_XG)
 		pos.x++;
 	else if (world->chunkToUpdate->status & DIR_XS)
@@ -576,92 +526,3 @@ void chunkAfterFrame(Metachunk *world) {
 
 	world->chunkToUpdate = NULL;
 }
-
-/*void chunkUpdate(Metachunk *world, Chunk *chunk) {
-	// chunkUpdate() finds all the neighbors of a chunk (and creates them,
-	// if they were not created already)
-
-	if (chunk->status < 1) {
-		// the following code assumes the chunk is one block in size
-		//long timer = startTimer();
-
-		chunk->adjacentCount = 0;
-		int existingChunks = 0;
-
-		Chunk **otherChunk = (Chunk**)world->chunks->mem;
-		for (; (void**)otherChunk != world->chunks->nextFree;
-				otherChunk++) {
-			if (chunk->high.x + 1 == (*otherChunk)->low.x
-			&& chunk->high.y >= (*otherChunk)->low.y
-			&& chunk->high.z >= (*otherChunk)->low.z
-			&& chunk->low.y <= (*otherChunk)->high.y
-			&& chunk->low.z <= (*otherChunk)->high.z) {
-				existingChunks += DIR_XG;
-			} else if (chunk->low.x - 1 == (*otherChunk)->high.x
-			&& chunk->high.y >= (*otherChunk)->low.y
-			&& chunk->high.z >= (*otherChunk)->low.z
-			&& chunk->low.y <= (*otherChunk)->high.y
-			&& chunk->low.z <= (*otherChunk)->high.z) {
-				existingChunks += DIR_XS;
-			} else if (chunk->high.y + 1 == (*otherChunk)->low.y
-			&& chunk->high.x >= (*otherChunk)->low.x
-			&& chunk->high.z >= (*otherChunk)->low.z
-			&& chunk->low.x <= (*otherChunk)->high.x
-			&& chunk->low.z <= (*otherChunk)->high.z) {
-				existingChunks += DIR_YG;
-			} else if (chunk->low.y - 1 == (*otherChunk)->high.y
-			&& chunk->high.x >= (*otherChunk)->low.x
-			&& chunk->high.z >= (*otherChunk)->low.z
-			&& chunk->low.x <= (*otherChunk)->high.x
-			&& chunk->low.z <= (*otherChunk)->high.z) {
-				existingChunks += DIR_YS;
-			} else if (chunk->high.z + 1 == (*otherChunk)->low.z
-			&& chunk->high.x >= (*otherChunk)->low.x
-			&& chunk->high.y >= (*otherChunk)->low.y
-			&& chunk->low.x <= (*otherChunk)->high.x
-			&& chunk->low.y <= (*otherChunk)->high.y) {
-				existingChunks += DIR_ZG;
-			} else if (chunk->low.z - 1 == (*otherChunk)->high.z
-			&& chunk->high.x >= (*otherChunk)->low.x
-			&& chunk->high.y >= (*otherChunk)->low.y
-			&& chunk->low.x <= (*otherChunk)->high.x
-			&& chunk->low.y <= (*otherChunk)->high.y) {
-				existingChunks += DIR_ZS;
-			} else {
-				continue;
-			}
-			chunk->adjacent[chunk->adjacentCount++] = *otherChunk;
-		}
-
-		if ((existingChunks & DIR_XG) == 0)
-			chunk->adjacent[chunk->adjacentCount++] = chunkCreate(
-					world, (Point){chunk->low.x + 1,
-					chunk->low.y, chunk->low.z});
-		if ((existingChunks & DIR_XS) == 0)
-			chunk->adjacent[chunk->adjacentCount++] = chunkCreate(
-					world, (Point){chunk->low.x - 1,
-					chunk->low.y, chunk->low.z});
-		if ((existingChunks & DIR_YG) == 0)
-			chunk->adjacent[chunk->adjacentCount++] = chunkCreate(
-					world, (Point){chunk->low.x,
-					chunk->low.y + 1, chunk->low.z});
-		if ((existingChunks & DIR_YS) == 0)
-			chunk->adjacent[chunk->adjacentCount++] = chunkCreate(
-					world, (Point){chunk->low.x,
-					chunk->low.y - 1, chunk->low.z});
-		if ((existingChunks & DIR_ZG) == 0)
-			chunk->adjacent[chunk->adjacentCount++] = chunkCreate(
-					world, (Point){chunk->low.x,
-					chunk->low.y, chunk->low.z + 1});
-		if ((existingChunks & DIR_ZS) == 0)
-			chunk->adjacent[chunk->adjacentCount++] = chunkCreate(
-					world, (Point){chunk->low.x,
-					chunk->low.y, chunk->low.z - 1});
-
-		//printf("Search for adjacent took %lims\n", stopTimer(timer));
-		chunk->status = 1;
-		//printf("chunkUpdate(): found %i for ", chunk->adjacentCount);
-		//pointPrint(chunk->low, "\n");
-	}
-}*/
-

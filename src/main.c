@@ -198,8 +198,7 @@ int main(int argc, char *argv[]) {
 
 	generatorInit();
 	
-	metachunk = chunkInit(generatorGetBlock, (Point){
-			camera->ix, camera->iy, camera->iz});
+	metachunk = chunkInit(generatorGetBlock);
 
 	renderHookDraw(&worldDrawChunked, NULL);
 	renderRun();
