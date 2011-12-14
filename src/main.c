@@ -6,6 +6,7 @@
 #include <GL/freeglut.h>
 
 #include "defs.h"
+#include "vector.h"
 #include "render.h"
 #include "generator.h"
 #include "chunk.h"
@@ -14,16 +15,12 @@ static Render *render;
 static Camera *camera;
 static Metachunk *metachunk;
 
-void blockDrawDist(Block *block, Comp x_, Comp y_, Comp z_,
+void blockDrawDist(Block *block, int x, int y, int z,
 		int distX, int distY, int distZ) {
 	if (*block == ' ')
 		return;
 
 	glPushMatrix();
-
-	int x = (long long int)x_ - HALFCOMP;
-	int y = (long long int)y_ - HALFCOMP;
-	int z = (long long int)z_ - HALFCOMP;
 
 	glBegin(GL_QUADS); {
 		if (distX > 0) {
@@ -87,12 +84,12 @@ void blockDrawDist(Block *block, Comp x_, Comp y_, Comp z_,
 void drawChunk(Chunk *chunk) {
 /*	// draw chunk's bounding rectangle as wireframe
 
-	int x1 = (long long int)chunk->low.x - HALFCOMP;
-	int y1 = (long long int)chunk->low.y - HALFCOMP;
-	int z1 = (long long int)chunk->low.z - HALFCOMP;
-	int x2 = (long long int)chunk->high.x - HALFCOMP + 1;
-	int y2 = (long long int)chunk->high.y - HALFCOMP + 1;
-	int z2 = (long long int)chunk->high.z - HALFCOMP + 1;
+	int x1 = (long long int)chunk->low.x;
+	int y1 = (long long int)chunk->low.y;
+	int z1 = (long long int)chunk->low.z;
+	int x2 = (long long int)chunk->high.x + 1;
+	int y2 = (long long int)chunk->high.y + 1;
+	int z2 = (long long int)chunk->high.z + 1;
 
 	glDisable(GL_LIGHTING);
 	glBegin(GL_LINES); {
@@ -130,14 +127,14 @@ void drawChunk(Chunk *chunk) {
 
 	Block **block = chunk->blocks;
 
-	Comp x, y, z;
+	int x, y, z;
 	int dx, dy, dz;
 
-	dx = (int)chunk->low.x - camera->ix;
+	dx = chunk->low.x - camera->pos.x;
 	for (x = chunk->low.x; x <= chunk->high.x; x++) {
-		dy = (int)chunk->low.y - camera->iy;
+		dy = chunk->low.y - camera->pos.y;
 		for (y = chunk->low.y; y <= chunk->high.y; y++) {
-			dz = (int)chunk->low.z - camera->iz;
+			dz = chunk->low.z - camera->pos.z;
 			for (z = chunk->low.z; z <= chunk->high.z; z++) {
 				blockDrawDist(*block, x,y,z, dx,dy,dz);
 				block++;
@@ -183,8 +180,7 @@ void findChunks(Chunk *startChunk) {
 void worldDrawChunked(void *foo) {
 	metachunk->cookie++;
 
-	Chunk *startChunk = chunkGet(metachunk, (Point){camera->ix,
-			camera->iy, camera->iz});
+	Chunk *startChunk = chunkGet(metachunk, camera->pos);
 	startChunk->cookie = metachunk->cookie;
 
 	findChunks(startChunk);

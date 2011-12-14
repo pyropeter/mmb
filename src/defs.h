@@ -3,21 +3,6 @@
 
 #include <sys/types.h>
 
-#define MAXCOMP 4294967295L
-#define HALFCOMP 2147483647L
-typedef u_int32_t Comp;
-
-typedef struct Point {
-	Comp x, y, z;
-} Point;
-#define POINTCMP(a,o,b) (a.x o b.x && a.y o b.y && a.z o b.z)
-#define POINTOP(a,o,b) ((Point){a.x o b.x, a.y o b.y, a.z o b.z})
-void pointPrint(Point point, char* tail);
-
-typedef struct Point3i {
-	int x, y, z;
-} Point3i;
-
 typedef char Block;
 
 extern void *knalloc(size_t size);
@@ -45,5 +30,7 @@ extern void **listSearch(List *list, void *element);
 
 extern long startTimer();
 extern long stopTimer(long start);
+
+extern int divRoundDown(int numerator, int denominator);
 
 #endif /* _MMB_DEFS_H */

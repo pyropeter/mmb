@@ -2,8 +2,9 @@
 #define _MMB_GENERATOR_H
 
 #include "defs.h"
+#include "vector.h"
 
 extern void generatorInit();
-extern Block *generatorGetBlock(Point pos);
+extern Block *generatorGetBlock(Vector3i pos);
 
 #endif /* _MMB_GENERATOR_H */

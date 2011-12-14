@@ -8,14 +8,14 @@
 #include "defs.h"
 
 typedef struct ChunkGroup {
-	Point low;
+	Vector3i low;
 	List *chunksXS, *chunksXG;
 	List *chunksYS, *chunksYG;
 	List *chunksZS, *chunksZG;
 } ChunkGroup;
 
 typedef struct Chunk {
-	Point low, high;
+	Vector3i low, high;
 	int status;
 	int cookie;
 
@@ -32,23 +32,23 @@ typedef struct AnnotatedBlock {
 } AnnotatedBlock;
 
 typedef struct Metachunk {
-	Block *(*generator)(Point);
+	Block *(*generator)(Vector3i);
 
 	int cookie;
 	List *chunks;
 	
-	Point3i groupSize;
+	Vector3i groupSize;
 	List *chunkGroups;
 
 	Chunk *lastChunk;
-	Point lastPos;
+	Vector3i lastPos;
 	
 	// chunkUpdate
 	Chunk *chunkToUpdate;
 } Metachunk;
 
-extern Metachunk *chunkInit(Block *(*gen)(Point));
-extern Chunk *chunkGet(Metachunk *world, Point pos);
+extern Metachunk *chunkInit(Block *(*gen)(Vector3i));
+extern Chunk *chunkGet(Metachunk *world, Vector3i pos);
 extern void chunkUpdate(Metachunk *world, Chunk *chunk);
 extern void chunkAfterFrame(Metachunk *world);
 

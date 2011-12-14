@@ -8,6 +8,7 @@
 #include <assert.h>
 
 #include "defs.h"
+#include "vector.h"
 #include "chunk.h"
 
 Chunk *chunkCreateBare(Metachunk *world) {
@@ -22,7 +23,7 @@ Chunk *chunkCreateBare(Metachunk *world) {
 	return chunk;
 }
 
-ChunkGroup *newChunkGroup(Metachunk *world, Point low) {
+ChunkGroup *newChunkGroup(Metachunk *world, Vector3i low) {
 	ChunkGroup *chunkGroup = knalloc(sizeof(ChunkGroup));
 	listInsert(world->chunkGroups, chunkGroup);
 	
@@ -60,7 +61,7 @@ void chunkTagBlocks(AnnotatedBlock *blocks, int sizeY, int sizeZ, int z,
 
 void handleChunk(Metachunk *world, AnnotatedBlock *blocks,
 		ChunkGroup *chunkGroup, int sizeX, int sizeY, int sizeZ,
-		Point low, int z, AnnotatedBlock *first) {
+		Vector3i low, int z, AnnotatedBlock *first) {
 	Chunk *chunk;
 	int chunkSizeX, chunkSizeY;
 
@@ -159,11 +160,15 @@ void handleChunk(Metachunk *world, AnnotatedBlock *blocks,
 	}
 }
 
-void mergeGroup(Metachunk *world, AnnotatedBlock *blocks, Point batchLow,
+void mergeGroup(Metachunk *world, AnnotatedBlock *blocks, Vector3i batchLow,
 		int sizeX, int sizeY, int sizeZ, List *chunks, int dir) {
-	Point3i p, low, high;
+	Vector3i p, low, high;
 	Chunk **chunk;
 	AnnotatedBlock *block;
+
+#ifdef MMB_DEBUG_CHUNK
+	printf("Merging with chunk in dir %i\n", dir);
+#endif
 
 	LISTITER(chunks, chunk, Chunk**) {
 		world->cookie++;
@@ -196,8 +201,8 @@ void mergeGroup(Metachunk *world, AnnotatedBlock *blocks, Point batchLow,
 	}
 }
 
-void chunkCreateBatch(Metachunk *world, Point low) {
-	Point high = POINTOP(low, +, world->groupSize);
+void chunkCreateBatch(Metachunk *world, Vector3i low) {
+	Vector3i high = VEC3IOP(low, +, world->groupSize);
 	int x,y,z;
 	int sizeX = high.x - low.x;
 	int sizeY = high.y - low.y;
@@ -206,7 +211,7 @@ void chunkCreateBatch(Metachunk *world, Point low) {
 	AnnotatedBlock *blocks = knalloc(blockcount * sizeof(AnnotatedBlock));
 	AnnotatedBlock *tmp, *tmpX, *tmpY;
 	int total = 0;
-	Point p;
+	Vector3i p;
 	ChunkGroup *chunkGroup = newChunkGroup(world, low);
 
 	tmp = blocks;
@@ -232,6 +237,22 @@ void chunkCreateBatch(Metachunk *world, Point low) {
 	}
 	}
 	}
+
+#ifdef MMB_DEBUG_CHUNK
+	for (p.y = low.y; p.y < high.y; p.y++) {
+		printf("y = %2i:\n", p.y - low.y);
+		for (p.z = high.z - 1; p.z >= low.z; p.z--) {
+			printf("%2i |", p.z - low.z);
+			for (p.x = low.x; p.x < high.x; p.x++) {
+				printf(" %c", *(world->generator(p)));
+			}
+			printf(" |\n");
+		}
+		printf("---+--------------------------------\n");
+		printf(" z | x 1 2 3 4 5 6 7 8 9 a b c d e f\n");
+		printf("\n");
+	}
+#endif
 
 	// set high
 	tmp = blocks + blockcount - 1;
@@ -366,30 +387,29 @@ void chunkCreateBatch(Metachunk *world, Point low) {
 			}
 		}
 	}
-	
+
 	// merge this ChunkGroup with adjacent ChunkGroups
 	ChunkGroup **otherGroup;
-	Point diff, ndiff;
+	Vector3i diff;
 	LISTITER(world->chunkGroups, otherGroup, ChunkGroup**) {
 		if (*otherGroup == chunkGroup)
 			continue;
 
-		diff = POINTOP((*otherGroup)->low, -, low);
-		ndiff = POINTOP(low, -, (*otherGroup)->low);
+		diff = VEC3IOP((*otherGroup)->low, -, low);
 
-		if      (ndiff.x == world->groupSize.x && !diff.y && !diff.z)
+		if      (-diff.x == world->groupSize.x && !diff.y && !diff.z)
 			mergeGroup(world, blocks, low, sizeX, sizeY, sizeZ,
 					(*otherGroup)->chunksXG, DIR_XS);
 		else if (diff.x == world->groupSize.x && !diff.y && !diff.z)
 			mergeGroup(world, blocks, low, sizeX, sizeY, sizeZ,
 					(*otherGroup)->chunksXS, DIR_XG);
-		else if (!diff.x && ndiff.y == world->groupSize.y && !diff.z)
+		else if (!diff.x && -diff.y == world->groupSize.y && !diff.z)
 			mergeGroup(world, blocks, low, sizeX, sizeY, sizeZ,
 					(*otherGroup)->chunksYG, DIR_YS);
 		else if (!diff.x && diff.y == world->groupSize.y && !diff.z)
 			mergeGroup(world, blocks, low, sizeX, sizeY, sizeZ,
 					(*otherGroup)->chunksYS, DIR_YG);
-		else if (!diff.x && !diff.y && ndiff.z == world->groupSize.z)
+		else if (!diff.x && !diff.y && -diff.z == world->groupSize.z)
 			mergeGroup(world, blocks, low, sizeX, sizeY, sizeZ,
 					(*otherGroup)->chunksZG, DIR_ZS);
 		else if (!diff.x && !diff.y && diff.z == world->groupSize.z)
@@ -397,11 +417,33 @@ void chunkCreateBatch(Metachunk *world, Point low) {
 					(*otherGroup)->chunksZS, DIR_ZG);
 	}
 
+#ifdef MMB_DEBUG_CHUNK
+	printf(" x  y  z | low   | hig   | lo2   | hi2   | chunk | status\n");
+	printf("---------+-------+-------+-------+-------+-------+-------\n");
+	tmp = blocks;
+	for (x = 0; x < sizeX; x++) {
+	for (y = 0; y < sizeY; y++) {
+	for (z = 0; z < sizeZ; z++) {
+		printf("%2i %2i %2i | %2i %2i | %2i %2i | "
+				"%2i %2i | %2i %2i | %p | %i\n",
+				x, y, z,
+				tmp->lowx, tmp->lowy,
+				tmp->highx, tmp->highy,
+				tmp->low2x, tmp->low2y,
+				tmp->high2x, tmp->high2y,
+				tmp->chunk, tmp->chunk->status);
+		tmp++;
+	}
+	}
+	}
+	printf("\n");
+#endif
+
 	printf("chunk.c: Found %i chunks in %i blocks (%i%%): ",
 			total,
 			blockcount,
 			(int)((float)total / blockcount * 100));
-	pointPrint(low, "\n");
+	VECPRINT(low, "\n");
 
 	return;
 }
@@ -411,12 +453,12 @@ void chunkCreateBatch(Metachunk *world, Point low) {
  * 
  * @param gen		A block generator function
  */
-Metachunk *chunkInit(Block *(*gen)(Point)) {
+Metachunk *chunkInit(Block *(*gen)(Vector3i)) {
 	Metachunk *world = knalloc(sizeof(Metachunk));
 	world->cookie = 0;
 	world->chunks = listNew(sizeof(Chunk*));
 	world->chunkGroups = listNew(sizeof(ChunkGroup*));
-	world->groupSize = (Point3i){10, 10, 10};
+	world->groupSize = (Vector3i){10, 10, 10};
 
 	world->generator = gen;
 
@@ -427,20 +469,33 @@ Metachunk *chunkInit(Block *(*gen)(Point)) {
 	return world;
 }
 
+Chunk *searchAllChunks(Metachunk *world, Vector3i pos) {
+	Chunk **chunk;
+	LISTITER(world->chunks, chunk, Chunk**) {
+		if (VEC3CMP((*chunk)->low, <=, pos) &&
+				VEC3CMP((*chunk)->high, >=, pos)) {
+			world->lastPos = pos;
+			world->lastChunk = *chunk;
+			return world->lastChunk;
+		}
+	}
+	return NULL;
+}
+
 /**
  * Returns the chunk at position pos
  * 
  * If no chunk at that position exists, it is generated and returned.
  */
-Chunk *chunkGet(Metachunk *world, Point pos) {
+Chunk *chunkGet(Metachunk *world, Vector3i pos) {
 	if (world->lastChunk) {
 		// check if position has changed at all
-		if (POINTCMP(world->lastPos, ==, pos))
+		if (VEC3CMP(world->lastPos, ==, pos))
 			return world->lastChunk;
 
 		// check if point is still in last chunk
-		if (POINTCMP(world->lastChunk->low, <=, pos) &&
-				POINTCMP(world->lastChunk->high, >=, pos)) {
+		if (VEC3CMP(world->lastChunk->low, <=, pos)
+		 && VEC3CMP(world->lastChunk->high, >=, pos)) {
 			world->lastPos = pos;
 			return world->lastChunk;
 		}
@@ -450,8 +505,8 @@ Chunk *chunkGet(Metachunk *world, Point pos) {
 		Chunk **middle, **adjacent;
 		LISTITER(world->lastChunk->adjacent, middle, Chunk**) {
 			LISTITER((*middle)->adjacent, adjacent, Chunk**) {
-				if (POINTCMP((*adjacent)->low, <=, pos)
-				 && POINTCMP((*adjacent)->high, >=, pos)) {
+				if (VEC3CMP((*adjacent)->low, <=, pos)
+				 && VEC3CMP((*adjacent)->high, >=, pos)) {
 					world->lastChunk = *adjacent;
 					world->lastPos = pos;
 					return *adjacent;
@@ -459,26 +514,21 @@ Chunk *chunkGet(Metachunk *world, Point pos) {
 			}
 		}
 
-		// just check all chunks (boring, slow but simple approach)
-		Chunk **chunk;
-		LISTITER(world->chunks, chunk, Chunk**) {
-			if (POINTCMP((*chunk)->low, <=, pos) &&
-					POINTCMP((*chunk)->high, >=, pos)) {
-				world->lastPos = pos;
-				world->lastChunk = *chunk;
-				return world->lastChunk;
-			}
-		}
+		// last resort
+		Chunk *res = searchAllChunks(world, pos);
+		if (res)
+			return res;
 	}
 
 	// create chunks at the requested position
-	Point batchPos = POINTOP(pos, /, world->groupSize);
-	batchPos = POINTOP(batchPos, *, world->groupSize);
+	Vector3i batchPos;
+	batchPos.x = divRoundDown(pos.x, world->groupSize.x);
+	batchPos.y = divRoundDown(pos.y, world->groupSize.y);
+	batchPos.z = divRoundDown(pos.z, world->groupSize.z);
+	batchPos = VEC3IOP(batchPos, *, world->groupSize);
 	chunkCreateBatch(world, batchPos);
-	
-	world->lastChunk = *(world->chunks->mem);
-	world->lastPos = (Point){0,0,0};
-	return chunkGet(world, pos);
+
+	return searchAllChunks(world, pos);
 }
 
 /**
@@ -504,8 +554,16 @@ void chunkAfterFrame(Metachunk *world) {
 	if (world->chunkToUpdate == NULL)
 		return;
 
-	Point pos = POINTOP(world->chunkToUpdate->low, /, world->groupSize);
-	
+#ifdef MMB_DEBUG_CHUNK
+	printf("Updating chunk %p, status %i\n",
+			world->chunkToUpdate, world->chunkToUpdate->status);
+#endif
+
+	Vector3i pos;
+	pos.x = divRoundDown(world->chunkToUpdate->low.x, world->groupSize.x);
+	pos.y = divRoundDown(world->chunkToUpdate->low.y, world->groupSize.y);
+	pos.z = divRoundDown(world->chunkToUpdate->low.z, world->groupSize.z);
+
 	if      (world->chunkToUpdate->status & DIR_XG)
 		pos.x++;
 	else if (world->chunkToUpdate->status & DIR_XS)
@@ -521,7 +579,7 @@ void chunkAfterFrame(Metachunk *world) {
 	else
 		exit(EXIT_FAILURE);
 
-	pos = POINTOP(pos, *, world->groupSize);
+	pos = VEC3IOP(pos, *, world->groupSize);
 	chunkCreateBatch(world, pos);
 
 	world->chunkToUpdate = NULL;

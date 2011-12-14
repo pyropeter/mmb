@@ -19,12 +19,14 @@ typedef struct Vector3i {
  */
 typedef struct Vector2i {
 	int x, y;
-} Vector3i;
+} Vector2i;
 
 #define VEC3CMP(a,o,b) (a.x o b.x && a.y o b.y && a.z o b.z)
 #define VEC2CMP(a,o,b) (a.x o b.x && a.y o b.y)
 
 #define VEC3IOP(a,o,b) ((Vector3i){a.x o b.x, a.y o b.y, a.z o b.z})
 #define VEC2IOP(a,o,b) ((Vector2i){a.x o b.x, a.y o b.y})
+
+#define VECPRINT(v, tail) printf("%i/%i/%i%s", v.x,v.y,v.z, tail);
 
 #endif /* _MMB_VECTOR_H */

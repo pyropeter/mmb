@@ -3,8 +3,10 @@
  * 
  * */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include "vector.h"
 #include "generator.h"
 
 static char *blocks = " s";
@@ -23,10 +25,10 @@ void generatorInit() {
 	return;
 }
 
-Block *generatorGetBlock(Point pos) {
-	Comp height = ((sinTable[(pos.x * TABLELEN / 20) % TABLELEN]
-			* cosTable[(pos.z * TABLELEN / 30) % TABLELEN])
-			/ 1000000000) + HALFCOMP;
+Block *generatorGetBlock(Vector3i pos) {
+	int height = ((sinTable[abs(pos.x * TABLELEN / 20) % TABLELEN]
+			* cosTable[abs(pos.z * TABLELEN / 30) % TABLELEN])
+			/ 1000000000);
 
 	if (height <= pos.y)
 		return blocks;

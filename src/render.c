@@ -26,15 +26,15 @@ void moveCamera(double dx, double dy, double dz) {
 	render.camera.x += dx;
 	render.camera.y += dy;
 	render.camera.z += dz;
-	render.camera.ix = (Comp)floor(render.camera.x);
-	render.camera.iy = (Comp)floor(render.camera.y);
-	render.camera.iz = (Comp)floor(render.camera.z);
-	render.camera.low.x = render.camera.ix - render.camera.range;
-	render.camera.low.y = render.camera.iy - render.camera.range;
-	render.camera.low.z = render.camera.iz - render.camera.range;
-	render.camera.high.x = render.camera.ix + render.camera.range;
-	render.camera.high.y = render.camera.iy + render.camera.range;
-	render.camera.high.z = render.camera.iz + render.camera.range;
+	render.camera.pos.x = (int)floor(render.camera.x);
+	render.camera.pos.y = (int)floor(render.camera.y);
+	render.camera.pos.z = (int)floor(render.camera.z);
+	render.camera.low.x = render.camera.pos.x - render.camera.range;
+	render.camera.low.y = render.camera.pos.y - render.camera.range;
+	render.camera.low.z = render.camera.pos.z - render.camera.range;
+	render.camera.high.x = render.camera.pos.x + render.camera.range;
+	render.camera.high.y = render.camera.pos.y + render.camera.range;
+	render.camera.high.z = render.camera.pos.z + render.camera.range;
 }
 
 void rotateCamera(float dax, float day) {
@@ -58,14 +58,14 @@ void rotateCamera(float dax, float day) {
 
 void renderDebug() {
 	printf("===== RENDER DEBUG =====\n");
-	printf("Camera: %1.1f/%1.1f/%1.1f %1.1f/%1.1f/%1.1f %li/%li/%li\n",
-			render.camera.x - HALFCOMP,
-			render.camera.y - HALFCOMP,
-			render.camera.z - HALFCOMP,
+	printf("Camera: %1.1f/%1.1f/%1.1f %1.1f/%1.1f/%1.1f %i/%i/%i\n",
+			render.camera.x,
+			render.camera.y,
+			render.camera.z,
 			render.camera.dx, render.camera.dy, render.camera.dz,
-			render.camera.ix - HALFCOMP,
-			render.camera.iy - HALFCOMP,
-			render.camera.iz - HALFCOMP);
+			render.camera.pos.x,
+			render.camera.pos.y,
+			render.camera.pos.z);
 	printf("Vertices drawn: %i\n", render.vertices);
 	printf("===== END =====\n");
 }
@@ -169,9 +169,9 @@ void onDisplay() {
 	glLoadIdentity();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
-	double x = render.camera.x - HALFCOMP;
-	double y = render.camera.y - HALFCOMP;
-	double z = render.camera.z - HALFCOMP;
+	double x = render.camera.x;
+	double y = render.camera.y;
+	double z = render.camera.z;
 
 	gluLookAt(x, y, z,
 			x + render.camera.dx,
@@ -210,7 +210,7 @@ Render *renderInit(int argc, char *argv[]) {
 	render.mouseSens = 1.0/1000;
 
 	render.camera.range = 10;
-	moveCamera(HALFCOMP, HALFCOMP + 2, HALFCOMP);
+	moveCamera(0, 2, 0);
 	rotateCamera(2.5, 1.0);
 
 

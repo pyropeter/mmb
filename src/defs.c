@@ -7,14 +7,6 @@
 
 static struct timespec tp;
 
-void pointPrint(Point point, char *tail) {
-	long long int x = point.x - HALFCOMP;
-	long long int y = point.y - HALFCOMP;
-	long long int z = point.z - HALFCOMP;
-
-	printf("%lli/%lli/%lli%s", x, y, z, tail);
-}
-
 void *knalloc(size_t size) {
 	/* The german word "Knall" means bang/explosion.
 	 * This function's name is thus to be considered a pun. */
@@ -88,3 +80,16 @@ long stopTimer(long start) {
 	return (startTimer() + 1000000000 - start) % 1000000000;
 }
 
+/**
+ * Divides numerator by denominator and rounds down
+ * 
+ * (The devision literal in C always rounds towards zero.)
+ * This function only accepts positive denominators (This may change in the
+ * future if anyone actually needs to divide by a negative number)
+ */
+int divRoundDown(int numerator, int denominator) {
+	if (numerator < 0)
+		return (numerator - denominator + 1) / denominator;
+	else
+		return numerator / denominator;
+}

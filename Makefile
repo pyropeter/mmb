@@ -6,14 +6,15 @@ DVERSION = v0.0.2
 VERSION := $(shell git describe --long --dirty 2>/dev/null || echo "$(DVERSION)")
 
 CC = gcc
-CFLAGS = -Wall -g -DVERSION='"$(VERSION)"' -pg
+CFLAGS = -Wall -g -pg
+ALL_CFLAGS = -DVERSION='"$(VERSION)"' $(CFLAGS)
 LIBS = -lGL -lGLU -lglut -lm
 
 # for stable releases
 # * disable symbols?
 # * disable profiling
 # * disable assertions
-#CFLAGS = -Wall -DVERSION='"$(VERSION)"' -DNDEBUG=1
+#CFLAGS = -Wall -DNDEBUG=1
 
 SRCS = src/render.c src/generator.c src/main.c src/chunk.c src/defs.c
 MAIN = mmb
@@ -26,10 +27,10 @@ all:    $(MAIN)
 	@echo Done.
 
 $(MAIN): $(OBJS)
-	$(CC) $(CFLAGS) -o $(MAIN) $(OBJS) $(LIBS)
+	$(CC) $(ALL_CFLAGS) -o $(MAIN) $(OBJS) $(LIBS)
 
 .c.o:
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(ALL_CFLAGS) -c $< -o $@
 
 clean:
 	$(RM) $(OBJS) $(MAIN)

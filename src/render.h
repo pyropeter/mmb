@@ -2,15 +2,17 @@
 #define _MMB_RENDER_H
 
 #include "defs.h"
+#include "vector.h"
 
 typedef struct {
 	double x, y, z;
-	Comp ix, iy, iz;
+	Vector3i pos;
+
 	float dx, dy, dz;
 	float ax, ay;
 
 	int range;
-	Point low, high;
+	Vector3i low, high;
 } Camera;
 
 typedef struct {
