@@ -14,7 +14,7 @@
 /**
  * Allocates and initializes memory for one Chunk
  * 
- * This also adds the chunk to the world's list of chunks.
+ * This also adds the Chunk to the world's list of chunks.
  */
 Chunk *newChunk(Metachunk *world) {
 	Chunk *chunk = knalloc(sizeof(Chunk));
@@ -31,7 +31,7 @@ Chunk *newChunk(Metachunk *world) {
 /**
  * Allocates and initializes memory for one ChunkGroup
  * 
- * This also adds the chunkGroup to the world's list of chunkGroups.
+ * This also adds the ChunkGroup to the world's list of ChunkGroups.
  */
 ChunkGroup *newChunkGroup(Metachunk *world, Vector3i low) {
 	ChunkGroup *chunkGroup = knalloc(sizeof(ChunkGroup));
@@ -48,18 +48,25 @@ ChunkGroup *newChunkGroup(Metachunk *world, Vector3i low) {
 	return chunkGroup;
 }
 
-void chunkTagBlocks(AnnotatedBlock *blocks, int sizeY, int sizeZ, int z,
-		int lowx, int lowy, int highx, int highy, Chunk *chunk) {
+/**
+ * Adds blocks to a chunk
+ * 
+ * This also adds references to the chunk in the corresponding AnnotatedBlocks.
+ */
+void addBlocksToChunk(AnnotatedBlock *blocks, Vector3i size, int z,
+		Vector2i low, Vector2i high, Chunk *chunk)
+{
 	AnnotatedBlock *block;
 	int blocksIndex = 0;
 	int x,y;
-	for (x = lowx; x <= highx; x++) {
-	for (y = lowy; y <= highy; y++) {
-		block = blocks + x*sizeY*sizeZ + y*sizeZ + z;
+
+	for (x = low.x; x <= high.x; x++) {
+	for (y = low.y; y <= high.y; y++) {
+		block = blocks  +  x * size.y * size.z  +  y * size.z  +  z;
 
 		assert(block->chunk == NULL);
-		assert(block->high2x == highx && block->high2y == highy);
-		assert(block->low2x == lowx && block->low2y == lowy);
+		assert(VEC2CMP(block->high2, ==, high));
+		assert(VEC2CMP(block->low2,  ==, low));
 
 		block->chunk = chunk;
 		if (chunk->blocks != NULL) {
@@ -69,46 +76,36 @@ void chunkTagBlocks(AnnotatedBlock *blocks, int sizeY, int sizeZ, int z,
 	}
 }
 
+/**
+ * Creates a new Chunk, adds Blocks to it, and merges the Chunk with the others
+ */
 void handleChunk(Metachunk *world, AnnotatedBlock *blocks,
-		ChunkGroup *chunkGroup, int sizeX, int sizeY, int sizeZ,
-		Vector3i low, int z, AnnotatedBlock *first) {
-	Chunk *chunk;
-	int chunkSizeX, chunkSizeY;
-
-	/*printf("Chunk: %2i %2i/%2i  %2i/%2i\n",
-		z,
-		first->low2x, first->low2y,
-		first->high2x, first->high2y);*/
-
-	chunk = newChunk(world);
+		ChunkGroup *chunkGroup, Vector3i size,
+		Vector3i low, int z, AnnotatedBlock *first)
+{
+	Chunk *chunk = newChunk(world);
 
 	// set low and high points of the new chunk
-	chunk->low.x = low.x + first->low2x;
-	chunk->low.y = low.y + first->low2y;
+	chunk->low.x = low.x + first->low2.x;
+	chunk->low.y = low.y + first->low2.y;
 	chunk->low.z = low.z + z;
-	chunk->high.x = low.x + first->high2x;
-	chunk->high.y = low.y + first->high2y;
+	chunk->high.x = low.x + first->high2.x;
+	chunk->high.y = low.y + first->high2.y;
 	chunk->high.z = low.z + z;
 
 	// transparent or not?
 	// allocate memory for block pointers
-	if (*(first->block) == ' ') {
-		chunk->blocks = NULL;
-	} else {
-		chunkSizeX = first->high2x - first->low2x + 1;
-		chunkSizeY = first->high2y - first->low2y + 1;
-		chunk->blocks = knalloc(
-				chunkSizeX * chunkSizeY * 1
-				* sizeof(Block*));
+	if (*(first->block) != ' ') {
+		int chunkSizeX = first->high2.x - first->low2.x + 1;
+		int chunkSizeY = first->high2.y - first->low2.y + 1;
+		chunk->blocks = knalloc(sizeof(Block*) * 
+				chunkSizeX * chunkSizeY * 1);
 	}
 
 	// add blocks to the chunk
-	chunkTagBlocks(blocks, sizeY, sizeZ, z,
-			first->low2x, first->low2y,
-			first->high2x, first->high2y,
-			chunk);
+	addBlocksToChunk(blocks, size, z, first->low2, first->high2, chunk);
 
-	// Handle adjacent chunks:
+	// ===== Handle adjacent chunks =====
 	// Only the chunks in XS, YS and ZS direction are relevant, the others
 	// are not yet generated.
 	// There is always only one adjacent chunk in X and one in Y direction
@@ -117,23 +114,24 @@ void handleChunk(Metachunk *world, AnnotatedBlock *blocks,
 	// the number of blocks in the current chunk.
 
 	// add the chunks in XS and YS direction
-	if (first->low2x > 0) {
-		listInsert(chunk->adjacent, (first - sizeY * sizeZ)->chunk);
-		listInsert((first - sizeY * sizeZ)->chunk->adjacent, chunk);
+	if (first->low2.x > 0) {
+		listInsert(chunk->adjacent, (first - size.y * size.z)->chunk);
+		listInsert((first - size.y * size.z)->chunk->adjacent, chunk);
 	}
-	if (first->low2y > 0) {
-		listInsert(chunk->adjacent, (first - sizeZ)->chunk);
-		listInsert((first - sizeZ)->chunk->adjacent, chunk);
+	if (first->low2.y > 0) {
+		listInsert(chunk->adjacent, (first - size.z)->chunk);
+		listInsert((first - size.z)->chunk->adjacent, chunk);
 	}
 
 	// add the chunks in ZS direction
 	if (z > 0) {
 		world->cookie++;
 		AnnotatedBlock *block;
-		int x,y;
-		for (x = first->low2x; x <= first->high2x; x++) {
-		for (y = first->low2y; y <= first->high2y; y++) {
-			block = blocks + x*sizeY*sizeZ + y*sizeZ + z - 1;
+		int x, y;
+		for (x = first->low2.x; x <= first->high2.x; x++) {
+		for (y = first->low2.y; y <= first->high2.y; y++) {
+			block = blocks  +  x * size.y * size.z
+					+  y * size.z  +  z  -  1;
 			if (block->chunk->cookie != world->cookie) {
 				listInsert(chunk->adjacent, block->chunk);
 				listInsert(block->chunk->adjacent, chunk);
@@ -143,12 +141,12 @@ void handleChunk(Metachunk *world, AnnotatedBlock *blocks,
 		}
 	}
 
-	// Add chunk to the ChunkGroup if neccessary
-	if (first->low2x == 0) {
+	// Add chunk to the ChunkGroup if it touches the ChunkGroup's borders
+	if (first->low2.x == 0) {
 		chunk->status += DIR_XS;
 		listInsert(chunkGroup->chunksXS, chunk);
 	}
-	if (first->low2y == 0) {
+	if (first->low2.y == 0) {
 		chunk->status += DIR_YS;
 		listInsert(chunkGroup->chunksYS, chunk);
 	}
@@ -156,22 +154,22 @@ void handleChunk(Metachunk *world, AnnotatedBlock *blocks,
 		chunk->status += DIR_ZS;
 		listInsert(chunkGroup->chunksZS, chunk);
 	}
-	if (first->high2x == sizeX - 1) {
+	if (first->high2.x == size.x - 1) {
 		chunk->status += DIR_XG;
 		listInsert(chunkGroup->chunksXG, chunk);
 	}
-	if (first->high2y == sizeY - 1) {
+	if (first->high2.y == size.y - 1) {
 		chunk->status += DIR_YG;
 		listInsert(chunkGroup->chunksYG, chunk);
 	}
-	if (z == sizeZ - 1) {
+	if (z == size.z - 1) {
 		chunk->status += DIR_ZG;
 		listInsert(chunkGroup->chunksZG, chunk);
 	}
 }
 
 void mergeGroup(Metachunk *world, AnnotatedBlock *blocks, Vector3i batchLow,
-		int sizeX, int sizeY, int sizeZ, List *chunks, int dir) {
+		Vector3i size, List *chunks, int dir) {
 	Vector3i p, low, high;
 	Chunk **chunk;
 	AnnotatedBlock *block;
@@ -182,22 +180,23 @@ void mergeGroup(Metachunk *world, AnnotatedBlock *blocks, Vector3i batchLow,
 
 	LISTITER(chunks, chunk, Chunk**) {
 		world->cookie++;
-		low.x = dir == DIR_XS ? 0 : (dir == DIR_XG ? sizeX - 1 :
+		low.x = dir == DIR_XS ? 0 : (dir == DIR_XG ? size.x - 1 :
 				(*chunk)->low.x - batchLow.x);
-		low.y = dir == DIR_YS ? 0 : (dir == DIR_YG ? sizeY - 1 :
+		low.y = dir == DIR_YS ? 0 : (dir == DIR_YG ? size.y - 1 :
 				(*chunk)->low.y - batchLow.y);
-		low.z = dir == DIR_ZS ? 0 : (dir == DIR_ZG ? sizeZ - 1 :
+		low.z = dir == DIR_ZS ? 0 : (dir == DIR_ZG ? size.z - 1 :
 				(*chunk)->low.z - batchLow.z);
-		high.x = dir == DIR_XS ? 0 : (dir == DIR_XG ? sizeX - 1 :
+		high.x = dir == DIR_XS ? 0 : (dir == DIR_XG ? size.x - 1 :
 				(*chunk)->high.x - batchLow.x);
-		high.y = dir == DIR_YS ? 0 : (dir == DIR_YG ? sizeY - 1 :
+		high.y = dir == DIR_YS ? 0 : (dir == DIR_YG ? size.y - 1 :
 				(*chunk)->high.y - batchLow.y);
-		high.z = dir == DIR_ZS ? 0 : (dir == DIR_ZG ? sizeZ - 1 :
+		high.z = dir == DIR_ZS ? 0 : (dir == DIR_ZG ? size.z - 1 :
 				(*chunk)->high.z - batchLow.z);
 		for (p.x = low.x; p.x <= high.x; p.x++) {
 		for (p.y = low.y; p.y <= high.y; p.y++) {
 		for (p.z = low.z; p.z <= high.z; p.z++) {
-			block = blocks + p.x*sizeY*sizeZ + p.y*sizeZ + p.z;
+			block = blocks  +  p.x * size.y * size.z
+					+  p.y * size.z  +  p.z;
 			if (block->chunk->cookie != world->cookie) {
 				block->chunk->status &= ~dir;
 				listInsert(block->chunk->adjacent, *chunk);
@@ -211,41 +210,154 @@ void mergeGroup(Metachunk *world, AnnotatedBlock *blocks, Vector3i batchLow,
 	}
 }
 
+void setDistances(AnnotatedBlock *blocks, Vector3i size) {
+	AnnotatedBlock *tmp, *tmpX, *tmpY;
+	int x, y, z;
+
+	// set high
+	tmp = blocks + size.x * size.y * size.z - 1;
+	tmpX = tmp + size.z * size.y;
+	tmpY = tmp + size.z;
+	for (x = size.x - 1; x >= 0; x--) {
+	for (y = size.y - 1; y >= 0; y--) {
+	for (z = size.z - 1; z >= 0; z--) {
+		if (x < size.x - 1) {
+			// compare with next block in XG-dir.
+			if (*(tmp->block) == *(tmpX->block)) {
+				tmp->high.x = tmpX->high.x;
+			} else {
+				tmp->high.x = x;
+			}
+		}
+		if (y < size.y - 1) {
+			// compare with next block in YG-dir.
+			if (*(tmp->block) == *(tmpY->block)) {
+				tmp->high.y = tmpY->high.y;
+			} else {
+				tmp->high.y = y;
+			}
+		}
+		tmp--;
+		tmpX--; tmpY--;
+	}
+	}
+	}
+
+	// set low and low2
+	tmp = blocks;
+	tmpX = tmp - size.z * size.y;
+	tmpY = tmp - size.z;
+	for (x = 0; x < size.x; x++) {
+	for (y = 0; y < size.y; y++) {
+	for (z = 0; z < size.z; z++) {
+		if (x > 0) {
+			// compare with next block in XS-dir.
+			if (*(tmp->block) == *(tmpX->block)) {
+				tmp->low.x = tmpX->low.x;
+			} else {
+				tmp->low.x = x;
+			}
+		}
+		if (y > 0) {
+			// compare with neyt block in YS-dir.
+			if (*(tmp->block) == *(tmpY->block)) {
+				tmp->low.y = tmpY->low.y;
+			} else {
+				tmp->low.y = y;
+			}
+		}
+		if (x > 0) {
+			// compare with next block in XS-dir.
+			if (tmp->low.x == tmpX->low.x
+			 && tmp->low.y == tmpX->low.y
+			 && tmp->high.x == tmpX->high.x
+			 && tmp->high.y == tmpX->high.y) {
+				tmp->low2.x = tmpX->low2.x;
+			} else {
+				tmp->low2.x = x;
+			}
+		}
+		if (y > 0) {
+			// compare with neyt block in YS-dir.
+			if (tmp->low.x == tmpY->low.x
+			 && tmp->low.y == tmpY->low.y
+			 && tmp->high.x == tmpY->high.x
+			 && tmp->high.y == tmpY->high.y) {
+				tmp->low2.y = tmpY->low2.y;
+			} else {
+				tmp->low2.y = y;
+			}
+		}
+		tmp++;
+		tmpX++; tmpY++;
+	}
+	}
+	}
+
+	// set high2
+	tmp = blocks + size.x * size.y * size.z - 1;
+	tmpX = tmp + size.z * size.y;
+	tmpY = tmp + size.z;
+	for (x = size.x - 1; x >= 0; x--) {
+	for (y = size.y - 1; y >= 0; y--) {
+	for (z = size.z - 1; z >= 0; z--) {
+		if (x < size.x - 1) {
+			// compare with next block in XS-dir.
+			if (tmp->low.x == tmpX->low.x
+			 && tmp->low.y == tmpX->low.y
+			 && tmp->high.x == tmpX->high.x
+			 && tmp->high.y == tmpX->high.y) {
+				tmp->high2.x = tmpX->high2.x;
+			} else {
+				tmp->high2.x = x;
+			}
+		}
+		if (y < size.y - 1) {
+			// compare with neyt block in YS-dir.
+			if (tmp->low.x == tmpY->low.x
+			 && tmp->low.y == tmpY->low.y
+			 && tmp->high.x == tmpY->high.x
+			 && tmp->high.y == tmpY->high.y) {
+				tmp->high2.y = tmpY->high2.y;
+			} else {
+				tmp->high2.y = y;
+			}
+		}
+		tmp--;
+		tmpX--; tmpY--;
+	}
+	}
+	}
+}
+
+/**
+ * Creates all Chunks in the cuboid defined by low and world->groupSize
+ */
 void chunkgenCreate(Metachunk *world, Vector3i low) {
 	Vector3i size = world->groupSize;
 	Vector3i high = VEC3IOP(low, +, size);
 	int blockcount = size.x * size.y * size.z;
 	int x,y,z;
-	int sizeX = high.x - low.x;
-	int sizeY = high.y - low.y;
-	int sizeZ = high.z - low.z;
 	AnnotatedBlock *blocks = world->annotatedBlocks;
-	AnnotatedBlock *tmp, *tmpX, *tmpY;
+	AnnotatedBlock *tmp;
 	int total = 0;
 	Vector3i p;
 	ChunkGroup *chunkGroup = newChunkGroup(world, low);
 
+	// load blocks from map generator
 	tmp = blocks;
-	for (x = 0; x < sizeX; x++) {
-	for (y = 0; y < sizeY; y++) {
-	for (z = 0; z < sizeZ; z++) {
+	for (p.x = low.x; p.x < high.x; p.x++) {
+	for (p.y = low.y; p.y < high.y; p.y++) {
+	for (p.z = low.z; p.z < high.z; p.z++) {
 		tmp->chunk = NULL;
+		tmp->block = world->generator(p);
 		tmp++;
 	}
 	}
 	}
 
-	// load blocks from map generator into blocks
-	tmp = blocks;
-	for (p.x = low.x; p.x < high.x; p.x++) {
-	for (p.y = low.y; p.y < high.y; p.y++) {
-	for (p.z = low.z; p.z < high.z; p.z++) {
-		(tmp++)->block = world->generator(p);
-	}
-	}
-	}
-
 #ifdef MMB_DEBUG_CHUNKGEN
+	// dump blocks for debugging
 	for (p.y = low.y; p.y < high.y; p.y++) {
 		printf("y = %2i:\n", p.y - low.y);
 		for (p.z = high.z - 1; p.z >= low.z; p.z--) {
@@ -261,136 +373,22 @@ void chunkgenCreate(Metachunk *world, Vector3i low) {
 	}
 #endif
 
-	// set high
-	tmp = blocks + blockcount - 1;
-	tmpX = tmp + sizeZ * sizeY;
-	tmpY = tmp + sizeZ;
-	for (x = sizeX - 1; x >= 0; x--) {
-	for (y = sizeY - 1; y >= 0; y--) {
-	for (z = sizeZ - 1; z >= 0; z--) {
-		if (x < sizeX - 1) {
-			// compare with next block in XG-dir.
-			if (*(tmp->block) == *(tmpX->block)) {
-				tmp->highx = tmpX->highx;
-			} else {
-				tmp->highx = x;
-			}
-		}
-		if (y < sizeY - 1) {
-			// compare with next block in YG-dir.
-			if (*(tmp->block) == *(tmpY->block)) {
-				tmp->highy = tmpY->highy;
-			} else {
-				tmp->highy = y;
-			}
-		}
-		tmp--;
-		tmpX--; tmpY--;
-	}
-	}
-	}
-
-	// set low and low2
-	tmp = blocks;
-	tmpX = tmp - sizeZ * sizeY;
-	tmpY = tmp - sizeZ;
-	for (x = 0; x < sizeX; x++) {
-	for (y = 0; y < sizeY; y++) {
-	for (z = 0; z < sizeZ; z++) {
-		if (x > 0) {
-			// compare with next block in XS-dir.
-			if (*(tmp->block) == *(tmpX->block)) {
-				tmp->lowx = tmpX->lowx;
-			} else {
-				tmp->lowx = x;
-			}
-		}
-		if (y > 0) {
-			// compare with neyt block in YS-dir.
-			if (*(tmp->block) == *(tmpY->block)) {
-				tmp->lowy = tmpY->lowy;
-			} else {
-				tmp->lowy = y;
-			}
-		}
-		if (x > 0) {
-			// compare with next block in XS-dir.
-			if (tmp->lowx == tmpX->lowx
-			 && tmp->lowy == tmpX->lowy
-			 && tmp->highx == tmpX->highx
-			 && tmp->highy == tmpX->highy) {
-				tmp->low2x = tmpX->low2x;
-			} else {
-				tmp->low2x = x;
-			}
-		}
-		if (y > 0) {
-			// compare with neyt block in YS-dir.
-			if (tmp->lowx == tmpY->lowx
-			 && tmp->lowy == tmpY->lowy
-			 && tmp->highx == tmpY->highx
-			 && tmp->highy == tmpY->highy) {
-				tmp->low2y = tmpY->low2y;
-			} else {
-				tmp->low2y = y;
-			}
-		}
-		tmp++;
-		tmpX++; tmpY++;
-	}
-	}
-	}
-
-	// set high2
-	tmp = blocks + blockcount - 1;
-	tmpX = tmp + sizeZ * sizeY;
-	tmpY = tmp + sizeZ;
-	for (x = sizeX - 1; x >= 0; x--) {
-	for (y = sizeY - 1; y >= 0; y--) {
-	for (z = sizeZ - 1; z >= 0; z--) {
-		if (x < sizeX - 1) {
-			// compare with next block in XS-dir.
-			if (tmp->lowx == tmpX->lowx
-			 && tmp->lowy == tmpX->lowy
-			 && tmp->highx == tmpX->highx
-			 && tmp->highy == tmpX->highy) {
-				tmp->high2x = tmpX->high2x;
-			} else {
-				tmp->high2x = x;
-			}
-		}
-		if (y < sizeY - 1) {
-			// compare with neyt block in YS-dir.
-			if (tmp->lowx == tmpY->lowx
-			 && tmp->lowy == tmpY->lowy
-			 && tmp->highx == tmpY->highx
-			 && tmp->highy == tmpY->highy) {
-				tmp->high2y = tmpY->high2y;
-			} else {
-				tmp->high2y = y;
-			}
-		}
-		tmp--;
-		tmpX--; tmpY--;
-	}
-	}
-	}
+	setDistances(world->annotatedBlocks, world->groupSize);
 
 	// search for chunks
 	// It is important to loop through the Z direction first, because
 	// handleChunk needs the chunks in ZS direction to be generated.
-	for (z = 0; z < sizeZ; z++) {
+	for (z = 0; z < size.z; z++) {
 		tmp = blocks + z;
-		for (x = 0; x < sizeX; x++) {
-			for (y = 0; y < sizeY; y++) {
-				if (tmp->low2x == x
-				 && tmp->low2y == y) {
+		for (x = 0; x < size.x; x++) {
+			for (y = 0; y < size.y; y++) {
+				if (tmp->low2.x == x
+				 && tmp->low2.y == y) {
 					handleChunk(world, blocks, chunkGroup,
-							sizeX, sizeY, sizeZ,
-							low, z, tmp);
+							size, low, z, tmp);
 					total++;
 				}
-				tmp += sizeZ;
+				tmp += size.z;
 			}
 		}
 	}
@@ -405,22 +403,22 @@ void chunkgenCreate(Metachunk *world, Vector3i low) {
 		diff = VEC3IOP((*otherGroup)->low, -, low);
 
 		if      (-diff.x == world->groupSize.x && !diff.y && !diff.z)
-			mergeGroup(world, blocks, low, sizeX, sizeY, sizeZ,
+			mergeGroup(world, blocks, low, size,
 					(*otherGroup)->chunksXG, DIR_XS);
 		else if (diff.x == world->groupSize.x && !diff.y && !diff.z)
-			mergeGroup(world, blocks, low, sizeX, sizeY, sizeZ,
+			mergeGroup(world, blocks, low, size,
 					(*otherGroup)->chunksXS, DIR_XG);
 		else if (!diff.x && -diff.y == world->groupSize.y && !diff.z)
-			mergeGroup(world, blocks, low, sizeX, sizeY, sizeZ,
+			mergeGroup(world, blocks, low, size,
 					(*otherGroup)->chunksYG, DIR_YS);
 		else if (!diff.x && diff.y == world->groupSize.y && !diff.z)
-			mergeGroup(world, blocks, low, sizeX, sizeY, sizeZ,
+			mergeGroup(world, blocks, low, size,
 					(*otherGroup)->chunksYS, DIR_YG);
 		else if (!diff.x && !diff.y && -diff.z == world->groupSize.z)
-			mergeGroup(world, blocks, low, sizeX, sizeY, sizeZ,
+			mergeGroup(world, blocks, low, size,
 					(*otherGroup)->chunksZG, DIR_ZS);
 		else if (!diff.x && !diff.y && diff.z == world->groupSize.z)
-			mergeGroup(world, blocks, low, sizeX, sizeY, sizeZ,
+			mergeGroup(world, blocks, low, size,
 					(*otherGroup)->chunksZS, DIR_ZG);
 	}
 
@@ -428,16 +426,16 @@ void chunkgenCreate(Metachunk *world, Vector3i low) {
 	printf(" x  y  z | low   | hig   | lo2   | hi2   | chunk | status\n");
 	printf("---------+-------+-------+-------+-------+-------+-------\n");
 	tmp = blocks;
-	for (x = 0; x < sizeX; x++) {
-	for (y = 0; y < sizeY; y++) {
-	for (z = 0; z < sizeZ; z++) {
+	for (x = 0; x < size.x; x++) {
+	for (y = 0; y < size.y; y++) {
+	for (z = 0; z < size.z; z++) {
 		printf("%2i %2i %2i | %2i %2i | %2i %2i | "
 				"%2i %2i | %2i %2i | %p | %i\n",
 				x, y, z,
-				tmp->lowx, tmp->lowy,
-				tmp->highx, tmp->highy,
-				tmp->low2x, tmp->low2y,
-				tmp->high2x, tmp->high2y,
+				tmp->low.x, tmp->low.y,
+				tmp->high.x, tmp->high.y,
+				tmp->low2.x, tmp->low2.y,
+				tmp->high2.x, tmp->high2.y,
 				tmp->chunk, tmp->chunk->status);
 		tmp++;
 	}
@@ -455,26 +453,31 @@ void chunkgenCreate(Metachunk *world, Vector3i low) {
 	return;
 }
 
+/**
+ * Initializes the Metachunk members needed by chunkgen.c
+ */
 void chunkgenInit(Metachunk *world) {
 	world->annotatedBlocks = knalloc(
 			world->groupSize.x * world->groupSize.y
 			* world->groupSize.z * sizeof(AnnotatedBlock));
-	
-	int x,y,z;
+
+	Vector2i p;
+	int z;
 	AnnotatedBlock *tmp = world->annotatedBlocks;
-	for (x = 0; x < world->groupSize.x; x++) {
-	for (y = 0; y < world->groupSize.y; y++) {
+	for (p.x = 0; p.x < world->groupSize.x; p.x++) {
+	for (p.y = 0; p.y < world->groupSize.y; p.y++) {
 	for (z = 0; z < world->groupSize.z; z++) {
-		tmp->lowx = tmp->highx = x;
-		tmp->lowy = tmp->highy = y;
-		tmp->low2x = tmp->high2x = x;
-		tmp->low2y = tmp->high2y = y;
+		tmp->low = tmp->high = tmp->low2 = tmp->high2 = p;
 		tmp++;
 	}
 	}
 	}
 }
 
+
+/**
+ * Frees the Metachunk members needed by chunkgen.c
+ */
 void chunkgenDeinit(Metachunk *world) {
 	free(world->annotatedBlocks);
 }
