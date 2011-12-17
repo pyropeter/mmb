@@ -1,7 +1,7 @@
 SHELL = /bin/sh
 .SUFFIXES:
 .SUFFIXES: .c .o
- 
+
 DVERSION = v0.1
 VERSION := $(shell git describe --tags --long --dirty 2>/dev/null \
 		|| echo "$(DVERSION)")
