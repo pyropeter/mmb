@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include "defs.h"
 #include "vector.h"
 #include "generator.h"
 
@@ -26,8 +27,10 @@ void generatorInit() {
 }
 
 Block *generatorGetBlock(Vector3i pos) {
-	int height = ((sinTable[abs(pos.x * TABLELEN / 20) % TABLELEN]
-			* cosTable[abs(pos.z * TABLELEN / 30) % TABLELEN])
+	int height = ((sinTable[modPositive(
+				divRoundDown(pos.x * TABLELEN, 20), TABLELEN)]
+			* cosTable[modPositive(
+				divRoundDown(pos.z * TABLELEN, 30), TABLELEN)])
 			/ 1000000000);
 
 	if (height <= pos.y)

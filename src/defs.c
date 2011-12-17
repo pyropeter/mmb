@@ -93,3 +93,16 @@ int divRoundDown(int numerator, int denominator) {
 	else
 		return numerator / denominator;
 }
+
+/**
+ * Divides numerator by denominator and returns a positive remainder
+ * 
+ * (The modulus literal in C always rounds towards zero.)
+ */
+int modPositive(int numerator, int denominator) {
+	int remainder = numerator % denominator;
+	if (remainder < 0)
+		return remainder + denominator;
+	else
+		return remainder;
+}

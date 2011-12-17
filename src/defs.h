@@ -32,5 +32,6 @@ extern long startTimer();
 extern long stopTimer(long start);
 
 extern int divRoundDown(int numerator, int denominator);
+extern int modPositive(int numerator, int denominator);
 
 #endif /* _MMB_DEFS_H */
