@@ -198,11 +198,13 @@ void worldDrawChunked(void *foo) {
 }
 
 int main(int argc, char *argv[]) {
+	printf("MMB version %s, \"White Cubes\"\n\n", VERSION);
+
 	render = renderInit(argc, argv);
 	camera = &(render->camera);
 
 	generatorInit();
-	
+
 	metachunk = chunkInit(generatorGetBlock);
 
 	renderHookDraw(&worldDrawChunked, NULL);
