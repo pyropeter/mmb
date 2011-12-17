@@ -6,6 +6,7 @@
 #define _MMB_CHUNK_H
 
 #include "defs.h"
+#include "vector.h"
 
 typedef struct Chunk {
 	Vector3i low, high;
@@ -16,6 +17,20 @@ typedef struct Chunk {
 
 	Block **blocks;
 } Chunk;
+
+typedef struct ChunkGroup {
+	Vector3i low;
+	List *chunksXS, *chunksXG;
+	List *chunksYS, *chunksYG;
+	List *chunksZS, *chunksZG;
+} ChunkGroup;
+
+typedef struct AnnotatedBlock {
+	Block *block;
+	int lowx, lowy, highx, highy;
+	int low2x, low2y, high2x, high2y;
+	Chunk *chunk;
+} AnnotatedBlock;
 
 typedef struct Metachunk {
 	Block *(*generator)(Vector3i);
@@ -31,6 +46,9 @@ typedef struct Metachunk {
 	
 	// chunkUpdate
 	Chunk *chunkToUpdate;
+	
+	// chunkgen
+	AnnotatedBlock *annotatedBlocks;
 } Metachunk;
 
 extern Metachunk *chunkInit(Block *(*gen)(Vector3i));

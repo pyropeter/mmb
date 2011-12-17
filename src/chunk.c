@@ -19,14 +19,17 @@ Metachunk *chunkInit(Block *(*gen)(Vector3i)) {
 	Metachunk *world = knalloc(sizeof(Metachunk));
 	world->cookie = 0;
 	world->chunks = listNew(sizeof(Chunk*));
-	world->chunkGroups = listNew(sizeof(ChunkGroup*));
-	world->groupSize = (Vector3i){8, 8, 8};
 
 	world->generator = gen;
 
 	world->lastChunk = NULL;
 
 	world->chunkToUpdate = NULL;
+
+	// chunkgen
+	world->chunkGroups = listNew(sizeof(ChunkGroup*));
+	world->groupSize = (Vector3i){8, 8, 8};
+	chunkgenInit(world);
 
 	return world;
 }
@@ -88,7 +91,7 @@ Chunk *chunkGet(Metachunk *world, Vector3i pos) {
 	batchPos.y = divRoundDown(pos.y, world->groupSize.y);
 	batchPos.z = divRoundDown(pos.z, world->groupSize.z);
 	batchPos = VEC3IOP(batchPos, *, world->groupSize);
-	chunkCreateBatch(world, batchPos);
+	chunkgenCreate(world, batchPos);
 
 	return searchAllChunks(world, pos);
 }
@@ -142,7 +145,7 @@ void chunkAfterFrame(Metachunk *world) {
 		exit(EXIT_FAILURE);
 
 	pos = VEC3IOP(pos, *, world->groupSize);
-	chunkCreateBatch(world, pos);
+	chunkgenCreate(world, pos);
 
 	world->chunkToUpdate = NULL;
 }

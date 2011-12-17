@@ -11,7 +11,12 @@
 #include "chunk.h"
 #include "chunkgen.h"
 
-Chunk *chunkCreateBare(Metachunk *world) {
+/**
+ * Allocates and initializes memory for one Chunk
+ * 
+ * This also adds the chunk to the world's list of chunks.
+ */
+Chunk *newChunk(Metachunk *world) {
 	Chunk *chunk = knalloc(sizeof(Chunk));
 	chunk->status = 0;
 	chunk->cookie = -1;
@@ -23,10 +28,14 @@ Chunk *chunkCreateBare(Metachunk *world) {
 	return chunk;
 }
 
+/**
+ * Allocates and initializes memory for one ChunkGroup
+ * 
+ * This also adds the chunkGroup to the world's list of chunkGroups.
+ */
 ChunkGroup *newChunkGroup(Metachunk *world, Vector3i low) {
 	ChunkGroup *chunkGroup = knalloc(sizeof(ChunkGroup));
-	listInsert(world->chunkGroups, chunkGroup);
-	
+
 	chunkGroup->low = low;
 	chunkGroup->chunksXS = listNew();
 	chunkGroup->chunksXG = listNew();
@@ -34,7 +43,8 @@ ChunkGroup *newChunkGroup(Metachunk *world, Vector3i low) {
 	chunkGroup->chunksYG = listNew();
 	chunkGroup->chunksZS = listNew();
 	chunkGroup->chunksZG = listNew();
-	
+
+	listInsert(world->chunkGroups, chunkGroup);
 	return chunkGroup;
 }
 
@@ -70,7 +80,7 @@ void handleChunk(Metachunk *world, AnnotatedBlock *blocks,
 		first->low2x, first->low2y,
 		first->high2x, first->high2y);*/
 
-	chunk = chunkCreateBare(world);
+	chunk = newChunk(world);
 
 	// set low and high points of the new chunk
 	chunk->low.x = low.x + first->low2x;
@@ -166,7 +176,7 @@ void mergeGroup(Metachunk *world, AnnotatedBlock *blocks, Vector3i batchLow,
 	Chunk **chunk;
 	AnnotatedBlock *block;
 
-#ifdef MMB_DEBUG_CHUNK
+#ifdef MMB_DEBUG_CHUNKGEN
 	printf("Merging with chunk in dir %i\n", dir);
 #endif
 
@@ -201,14 +211,15 @@ void mergeGroup(Metachunk *world, AnnotatedBlock *blocks, Vector3i batchLow,
 	}
 }
 
-void chunkCreateBatch(Metachunk *world, Vector3i low) {
-	Vector3i high = VEC3IOP(low, +, world->groupSize);
+void chunkgenCreate(Metachunk *world, Vector3i low) {
+	Vector3i size = world->groupSize;
+	Vector3i high = VEC3IOP(low, +, size);
+	int blockcount = size.x * size.y * size.z;
 	int x,y,z;
 	int sizeX = high.x - low.x;
 	int sizeY = high.y - low.y;
 	int sizeZ = high.z - low.z;
-	int blockcount = sizeX * sizeY * sizeZ;
-	AnnotatedBlock *blocks = knalloc(blockcount * sizeof(AnnotatedBlock));
+	AnnotatedBlock *blocks = world->annotatedBlocks;
 	AnnotatedBlock *tmp, *tmpX, *tmpY;
 	int total = 0;
 	Vector3i p;
@@ -218,10 +229,6 @@ void chunkCreateBatch(Metachunk *world, Vector3i low) {
 	for (x = 0; x < sizeX; x++) {
 	for (y = 0; y < sizeY; y++) {
 	for (z = 0; z < sizeZ; z++) {
-		tmp->lowx = tmp->highx = x;
-		tmp->lowy = tmp->highy = y;
-		tmp->low2x = tmp->high2x = x;
-		tmp->low2y = tmp->high2y = y;
 		tmp->chunk = NULL;
 		tmp++;
 	}
@@ -238,7 +245,7 @@ void chunkCreateBatch(Metachunk *world, Vector3i low) {
 	}
 	}
 
-#ifdef MMB_DEBUG_CHUNK
+#ifdef MMB_DEBUG_CHUNKGEN
 	for (p.y = low.y; p.y < high.y; p.y++) {
 		printf("y = %2i:\n", p.y - low.y);
 		for (p.z = high.z - 1; p.z >= low.z; p.z--) {
@@ -417,7 +424,7 @@ void chunkCreateBatch(Metachunk *world, Vector3i low) {
 					(*otherGroup)->chunksZS, DIR_ZG);
 	}
 
-#ifdef MMB_DEBUG_CHUNK
+#ifdef MMB_DEBUG_CHUNKGEN
 	printf(" x  y  z | low   | hig   | lo2   | hi2   | chunk | status\n");
 	printf("---------+-------+-------+-------+-------+-------+-------\n");
 	tmp = blocks;
@@ -446,4 +453,28 @@ void chunkCreateBatch(Metachunk *world, Vector3i low) {
 	VECPRINT(low, "\n");
 
 	return;
+}
+
+void chunkgenInit(Metachunk *world) {
+	world->annotatedBlocks = knalloc(
+			world->groupSize.x * world->groupSize.y
+			* world->groupSize.z * sizeof(AnnotatedBlock));
+	
+	int x,y,z;
+	AnnotatedBlock *tmp = world->annotatedBlocks;
+	for (x = 0; x < world->groupSize.x; x++) {
+	for (y = 0; y < world->groupSize.y; y++) {
+	for (z = 0; z < world->groupSize.z; z++) {
+		tmp->lowx = tmp->highx = x;
+		tmp->lowy = tmp->highy = y;
+		tmp->low2x = tmp->high2x = x;
+		tmp->low2y = tmp->high2y = y;
+		tmp++;
+	}
+	}
+	}
+}
+
+void chunkgenDeinit(Metachunk *world) {
+	free(world->annotatedBlocks);
 }
