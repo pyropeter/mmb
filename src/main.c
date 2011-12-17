@@ -180,11 +180,20 @@ void findChunks(Chunk *startChunk) {
 void worldDrawChunked(void *foo) {
 	metachunk->cookie++;
 
+#ifdef MMB_DEBUG_MAIN
+	long timer = startTimer();
+#endif
+
 	Chunk *startChunk = chunkGet(metachunk, camera->pos);
 	startChunk->cookie = metachunk->cookie;
-
 	findChunks(startChunk);
+
 	chunkAfterFrame(metachunk);
+
+#ifdef MMB_DEBUG_MAIN
+	printf("frame done, time: %i s^-6\n", stopTimer(timer));
+#endif
+
 	fflush(stdout);
 }
 

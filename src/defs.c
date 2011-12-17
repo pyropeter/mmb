@@ -96,7 +96,7 @@ long startTimer() {
 }
 
 /**
- * Returns the time since the call to startTimer() in milliseconds
+ * Returns the time since the call to startTimer() in microseconds
  * 
  * This can't be used to measure durations longer than 1000 seconds
  */
