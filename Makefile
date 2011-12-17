@@ -16,7 +16,8 @@ LIBS = -lGL -lGLU -lglut -lm
 # * disable assertions
 #CFLAGS = -Wall -DNDEBUG=1
 
-SRCS = src/render.c src/generator.c src/main.c src/chunk.c src/defs.c
+SRCS = src/render.c src/generator.c src/main.c src/chunk.c src/defs.c \
+	src/chunkgen.c
 MAIN = mmb
 
 OBJS = $(SRCS:.c=.o)
@@ -40,8 +41,10 @@ depend: $(SRCS)
 
 # DO NOT DELETE THIS LINE -- make depend needs it
 
-src/render.o: src/render.h src/defs.h
-src/generator.o: src/generator.h src/defs.h
-src/main.o: src/defs.h src/render.h src/generator.h src/chunk.h
-src/chunk.o: src/chunk.h src/defs.h
+src/render.o: src/render.h src/defs.h src/vector.h
+src/generator.o: src/defs.h src/vector.h src/generator.h
+src/main.o: src/defs.h src/vector.h src/render.h src/generator.h
+src/main.o: src/chunk.h
+src/chunk.o: src/defs.h src/vector.h src/chunk.h src/chunkgen.h
 src/defs.o: src/defs.h
+src/chunkgen.o: src/defs.h src/vector.h src/chunk.h src/chunkgen.h

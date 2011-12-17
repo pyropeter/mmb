@@ -7,13 +7,6 @@
 
 #include "defs.h"
 
-typedef struct ChunkGroup {
-	Vector3i low;
-	List *chunksXS, *chunksXG;
-	List *chunksYS, *chunksYG;
-	List *chunksZS, *chunksZG;
-} ChunkGroup;
-
 typedef struct Chunk {
 	Vector3i low, high;
 	int status;
@@ -23,13 +16,6 @@ typedef struct Chunk {
 
 	Block **blocks;
 } Chunk;
-
-typedef struct AnnotatedBlock {
-	Block *block;
-	int lowx, lowy, highx, highy;
-	int low2x, low2y, high2x, high2y;
-	Chunk *chunk;
-} AnnotatedBlock;
 
 typedef struct Metachunk {
 	Block *(*generator)(Vector3i);
