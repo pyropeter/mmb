@@ -34,6 +34,22 @@ void listFree(List *list) {
 	free(list);
 }
 
+/**
+ * Returns the number of elements in the List list
+ */
+int listLen(List *list) {
+	return list->nextFree - list->mem;
+}
+
+/**
+ * Removes all elements from the List, but keeps the memory
+ * 
+ * Use this if you are going to refill the list with a similar amount of items.
+ */
+void listEmpty(List *list) {
+	list->nextFree = list->mem;
+}
+
 void listInsert(List *list, void *ptr) {
 	if (list->end <= list->nextFree + 2) {
 		off_t freeOffset = list->nextFree - list->mem;
@@ -71,11 +87,19 @@ void **listSearch(List *list, void *ptr) {
 	return NULL;
 }
 
+/**
+ * Returns a value that can be passed to stopTimer()
+ */
 long startTimer() {
 	clock_gettime(CLOCK_REALTIME, &tp);
 	return (tp.tv_sec % 1000) * 1000000 + tp.tv_nsec / 1000;
 }
 
+/**
+ * Returns the time since the call to startTimer() in milliseconds
+ * 
+ * This can't be used to measure durations longer than 1000 seconds
+ */
 long stopTimer(long start) {
 	return (startTimer() + 1000000000 - start) % 1000000000;
 }

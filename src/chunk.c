@@ -24,7 +24,8 @@ Metachunk *chunkInit(Block *(*gen)(Vector3i)) {
 
 	world->lastChunk = NULL;
 
-	world->chunkToUpdate = NULL;
+	world->maxChunksToUpdate = 50;
+	world->chunksToUpdate = listNew();
 
 	// chunkgen
 	world->chunkGroups = listNew(sizeof(ChunkGroup*));
@@ -98,54 +99,56 @@ Chunk *chunkGet(Metachunk *world, Vector3i pos) {
 
 /**
  * Marks a chunk for updating by chunkAfterFrame()
- * 
- * The real updating is done by chunkAfterFrame(). Only the first chunk with
- * missing adjacent chunks is marked. This ensures that only one ChunkGroup
- * is generated every frame (to limit the lag).
  */
 void chunkUpdate(Metachunk *world, Chunk *chunk) {
-	if (world->chunkToUpdate != NULL || chunk->status == 0)
+	if (chunk->status == 0)
 		return;
 
-	world->chunkToUpdate = chunk;
+	listInsert(world->chunksToUpdate, chunk);
 }
 
 /**
- * Updates the chunk marked by chunkUpdate()
+ * Updates the Chunks marked by chunkUpdate()
  * 
- * This generates one ChunkGroup adjacent to the marked chunk.
+ * This generates one ChunkGroup adjacent to each marked Chunk.
+ * At most world->maxChunksToUpdate Chunks are updated (to limit the lag).
  */
 void chunkAfterFrame(Metachunk *world) {
-	if (world->chunkToUpdate == NULL)
-		return;
+	Chunk** chunk;
+	Vector3i pos;
+	int count = world->maxChunksToUpdate;
 
+	LISTITER(world->chunksToUpdate, chunk, Chunk**) {
 #ifdef MMB_DEBUG_CHUNK
-	printf("Updating chunk %p, status %i\n",
-			world->chunkToUpdate, world->chunkToUpdate->status);
+		printf("Updating chunk %p, status %i\n",
+				*chunk, (*chunk)->status);
 #endif
 
-	Vector3i pos;
-	pos.x = divRoundDown(world->chunkToUpdate->low.x, world->groupSize.x);
-	pos.y = divRoundDown(world->chunkToUpdate->low.y, world->groupSize.y);
-	pos.z = divRoundDown(world->chunkToUpdate->low.z, world->groupSize.z);
+		pos.x = divRoundDown((*chunk)->low.x, world->groupSize.x);
+		pos.y = divRoundDown((*chunk)->low.y, world->groupSize.y);
+		pos.z = divRoundDown((*chunk)->low.z, world->groupSize.z);
 
-	if      (world->chunkToUpdate->status & DIR_XG)
-		pos.x++;
-	else if (world->chunkToUpdate->status & DIR_XS)
-		pos.x--;
-	else if (world->chunkToUpdate->status & DIR_YG)
-		pos.y++;
-	else if (world->chunkToUpdate->status & DIR_YS)
-		pos.y--;
-	else if (world->chunkToUpdate->status & DIR_ZG)
-		pos.z++;
-	else if (world->chunkToUpdate->status & DIR_ZS)
-		pos.z--;
-	else
-		exit(EXIT_FAILURE);
+		if      ((*chunk)->status & DIR_XG)
+			pos.x++;
+		else if ((*chunk)->status & DIR_XS)
+			pos.x--;
+		else if ((*chunk)->status & DIR_YG)
+			pos.y++;
+		else if ((*chunk)->status & DIR_YS)
+			pos.y--;
+		else if ((*chunk)->status & DIR_ZG)
+			pos.z++;
+		else if ((*chunk)->status & DIR_ZS)
+			pos.z--;
+		else
+			continue;
 
-	pos = VEC3IOP(pos, *, world->groupSize);
-	chunkgenCreate(world, pos);
+		pos = VEC3IOP(pos, *, world->groupSize);
+		chunkgenCreate(world, pos);
 
-	world->chunkToUpdate = NULL;
+		if (--count == 0)
+			break;
+	}
+
+	listEmpty(world->chunksToUpdate);
 }

@@ -45,7 +45,8 @@ typedef struct Metachunk {
 	Vector3i lastPos;
 	
 	// chunkUpdate
-	Chunk *chunkToUpdate;
+	int maxChunksToUpdate;
+	List *chunksToUpdate;
 	
 	// chunkgen
 	AnnotatedBlock *annotatedBlocks;
