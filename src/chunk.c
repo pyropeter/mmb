@@ -458,7 +458,7 @@ Metachunk *chunkInit(Block *(*gen)(Vector3i)) {
 	world->cookie = 0;
 	world->chunks = listNew(sizeof(Chunk*));
 	world->chunkGroups = listNew(sizeof(ChunkGroup*));
-	world->groupSize = (Vector3i){10, 10, 10};
+	world->groupSize = (Vector3i){8, 8, 8};
 
 	world->generator = gen;
 
