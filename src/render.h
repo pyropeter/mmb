@@ -23,11 +23,15 @@ typedef struct {
 	Camera camera;
 	void (*onDraw)(void *data);
 	void *onDrawData;
+	void (*onKey)(void *data, unsigned char key);
+	void *onKeyData;
 	int vertices;
 } Render;
 
 extern Render *renderInit(int argc, char *argv[]);
 extern void renderRun();
 extern void renderHookDraw(void (*func)(void *data), void *data);
+extern void renderHookKey(void (*func)(void *data, unsigned char key),
+		void *data);
 
 #endif /* _MMB_RENDER_H */

@@ -81,9 +81,8 @@ void blockDrawDist(Block *block, int x, int y, int z,
 	glPopMatrix();
 }
 
-void drawChunk(Chunk *chunk) {
-/*	// draw chunk's bounding rectangle as wireframe
-
+//! draw Chunk's bounding rectangle as wireframe
+void drawChunkWire(Chunk *chunk) {
 	int x1 = (long long int)chunk->low.x;
 	int y1 = (long long int)chunk->low.y;
 	int z1 = (long long int)chunk->low.z;
@@ -121,7 +120,9 @@ void drawChunk(Chunk *chunk) {
 		glVertex3f(x2, y2, z2);
 	}; glEnd();
 	glEnable(GL_LIGHTING);
-*/
+}
+
+void drawChunk(Chunk *chunk) {
 	if (chunk->blocks == NULL)
 		return;
 
@@ -190,11 +191,41 @@ void worldDrawChunked(void *foo) {
 
 	chunkAfterFrame(metachunk);
 
+	Vector3f pos = (Vector3f){camera->x, camera->y, camera->z};
+	Vector3f dir = (Vector3f){camera->dx, camera->dy, camera->dz};
+	Chunk *marked = chunkFindSolid(startChunk, pos, dir);
+	if (marked)
+		drawChunkWire(marked);
+
 #ifdef MMB_DEBUG_MAIN
 	printf("frame done, time: %i s^-6\n", stopTimer(timer));
 #endif
 
 	fflush(stdout);
+}
+/*
+void testRay() {
+	Vector3f pos = (Vector3f){0.5,0.5,0.5};
+	Vector3f dir = (Vector3f){camera->dx, camera->dy, camera->dz};
+	Vector3f pos2 = pos;
+
+	int ret = chunkTraceRay(chunkGet(metachunk, camera->pos),
+			&pos2, dir);
+	printf("Raytrace: ");
+	VECFPRINT(pos, " > ");
+	printf("%i > ", ret);
+	VECFPRINT(pos2, "\n");
+}*/
+
+void onKey(void *foo, unsigned char key) {
+	switch (key) {
+		/*case 'p':
+			testRay();
+			break;*/
+		default:
+			printf("No mapping for key %i\n", key);
+			break;
+	}
 }
 
 int main(int argc, char *argv[]) {
@@ -208,6 +239,7 @@ int main(int argc, char *argv[]) {
 	metachunk = chunkInit(generatorGetBlock);
 
 	renderHookDraw(&worldDrawChunked, NULL);
+	renderHookKey(&onKey, NULL);
 	renderRun();
 	return EXIT_SUCCESS;
 }

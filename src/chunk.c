@@ -152,3 +152,181 @@ void chunkAfterFrame(Metachunk *world) {
 
 	listEmpty(world->chunksToUpdate);
 }
+
+/**
+ * Returns the point of intersection between a ray and a Chunk.
+ * 
+ * @param pos	Where the ray begins (relative to chunk->low)
+ * @param dir	Direction of the ray
+ */
+Vector3i chunkTraceRay(Chunk *chunk, Vector3f *pos, Vector3f dir)
+{
+	float factor;
+	Vector3f size, distLow, distHigh, result;
+
+	size = VEC3FOP(chunk->high, -, chunk->low);
+	size.x++; size.y++; size.z++;
+	distLow = *pos; // low -> pos
+	distHigh = VEC3FOP(distLow, -, size); // high -> pos
+	/*VECFPRINT(size, " - ");
+	VECFPRINT(distLow, " - ");
+	VECFPRINT(distHigh, "\n");*/
+
+	if (dir.x <= 0) {
+		factor = distLow.x / dir.x;
+		result.y = dir.y * factor;
+		if (distLow.y >= result.y && result.y >= distHigh.y) {
+			result.z = dir.z * factor;
+			if (distLow.z >= result.z && result.z >= distHigh.z) {
+				pos->x = 0;
+				pos->y -= result.y;
+				pos->z -= result.z;
+				//return DIR_XS;
+				return (Vector3i){
+					chunk->low.x + 0,
+					chunk->low.y + floor(pos->y),
+					chunk->low.z + floor(pos->z)};
+			}
+		}
+	}
+	if (dir.x >= 0) {
+		factor = distHigh.x / dir.x;
+		result.y = dir.y * factor;
+		if (distLow.y >= result.y && result.y >= distHigh.y) {
+			result.z = dir.z * factor;
+			if (distLow.z >= result.z && result.z >= distHigh.z) {
+				pos->x = size.x;
+				pos->y -= result.y;
+				pos->z -= result.z;
+				//return DIR_XG;
+				return (Vector3i){
+					chunk->low.x + size.x,
+					chunk->low.y + floor(pos->y),
+					chunk->low.z + floor(pos->z)};
+			}
+		}
+	}
+
+	if (dir.y <= 0) {
+		factor = distLow.y / dir.y;
+		result.x = dir.x * factor;
+		if (distLow.x >= result.x && result.x >= distHigh.x) {
+			result.z = dir.z * factor;
+			if (distLow.z >= result.z && result.z >= distHigh.z) {
+				pos->y = 0;
+				pos->x -= result.x;
+				pos->z -= result.z;
+				//return DIR_YS;
+				return (Vector3i){
+					chunk->low.x + floor(pos->x),
+					chunk->low.y + 0,
+					chunk->low.z + floor(pos->z)};
+			}
+		}
+	}
+	if (dir.y >= 0) {
+		factor = distHigh.y / dir.y;
+		result.x = dir.x * factor;
+		if (distLow.x >= result.x && result.x >= distHigh.x) {
+			result.z = dir.z * factor;
+			if (distLow.z >= result.z && result.z >= distHigh.z) {
+				pos->y = size.y;
+				pos->x -= result.x;
+				pos->z -= result.z;
+				//return DIR_YG;
+				return (Vector3i){
+					chunk->low.x + floor(pos->x),
+					chunk->low.y + size.y,
+					chunk->low.z + floor(pos->z)};
+			}
+		}
+	}
+
+	if (dir.z <= 0) {
+		factor = distLow.z / dir.z;
+		result.x = dir.x * factor;
+		if (distLow.x >= result.x && result.x >= distHigh.x) {
+			result.y = dir.y * factor;
+			if (distLow.y >= result.y && result.y >= distHigh.y) {
+				pos->z = 0;
+				pos->x -= result.x;
+				pos->y -= result.y;
+				//return DIR_ZS;
+				return (Vector3i){
+					chunk->low.x + floor(pos->x),
+					chunk->low.y + floor(pos->y),
+					chunk->low.z + 0};
+			}
+		}
+	}
+	if (dir.z >= 0) {
+		factor = distHigh.z / dir.z;
+		result.x = dir.x * factor;
+		if (distLow.x >= result.x && result.x >= distHigh.x) {
+			result.y = dir.y * factor;
+			if (distLow.y >= result.y && result.y >= distHigh.y) {
+				pos->z = size.z;
+				pos->x -= result.x;
+				pos->y -= result.y;
+				//return DIR_ZG;
+				return (Vector3i){
+					chunk->low.x + floor(pos->x),
+					chunk->low.y + floor(pos->y),
+					chunk->low.z + size.z};
+			}
+		}
+	}
+	printf("This is bullshit!\n");
+	return (Vector3i){0,0,0};
+}
+
+Chunk *chunkSearchNextChunk(Chunk *startChunk, Vector3i pos) {
+	Chunk **chunk;
+	printf("search: ");
+	VECPRINT(startChunk->low, " - ");
+	VECPRINT(startChunk->high, " - ");
+	VECPRINT(pos, "\n");
+	LISTITER(startChunk->adjacent, chunk, Chunk**) {
+		if (VEC3CMP((*chunk)->low, <=, pos)
+		 && VEC3CMP((*chunk)->high, >=, pos)) {
+			return *chunk;
+		}
+	}
+	printf("This is cowshit!\n");
+	return NULL;
+}
+
+Chunk *chunkFindSolid(Chunk *chunk, Vector3f startPos, Vector3f dir) {
+	Chunk *nextChunk;
+	Vector3i nextPos, diff;
+	Vector3f pos = VEC3FOP(startPos, -, chunk->low);
+	/*pos.x = startPos.x - (float)(chunk->low.x);
+	pos.y = startPos.y - (float)(chunk->low.y);
+	pos.z = startPos.z - (float)(chunk->low.z);*/
+
+	printf("begin --------------------\n");
+	VECFPRINT(startPos, "\n");
+
+	for (;;) {
+		printf("iter\n");
+		VECFPRINT(pos, "\n");
+		nextPos = chunkTraceRay(chunk, &pos, dir);
+		VECPRINT(nextPos, " - ");
+		VECFPRINT(pos, "\n");
+		if (nextPos.x == 0 && nextPos.y == 0 && nextPos.z == 0)
+			return NULL;
+		nextChunk = chunkSearchNextChunk(chunk, nextPos);
+		if (!nextChunk)
+			return NULL;
+		if (nextChunk->blocks) {
+			printf("found!!!!!!\n");
+			return nextChunk;
+		}
+		
+		diff = VEC3IOP(chunk->low, -, nextChunk->low);
+		pos = VEC3FOP(pos, +, diff);
+		chunk = nextChunk;
+	}
+
+	return NULL;
+}

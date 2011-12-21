@@ -56,5 +56,7 @@ extern Metachunk *chunkInit(Block *(*gen)(Vector3i));
 extern Chunk *chunkGet(Metachunk *world, Vector3i pos);
 extern void chunkUpdate(Metachunk *world, Chunk *chunk);
 extern void chunkAfterFrame(Metachunk *world);
+extern Vector3i chunkTraceRay(Chunk *chunk, Vector3f *pos, Vector3f dir);
+extern Chunk *chunkFindSolid(Chunk *chunk, Vector3f pos, Vector3f dir);
 
 #endif /* _MMB_CHUNK_H */

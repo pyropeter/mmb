@@ -149,7 +149,8 @@ void onKeyboard(unsigned char key, int x, int y) {
 			moveCamera(0,0,0);
 			break;
 		default:
-			printf("No mapping for key %i\n", key);
+			if (render.onKey)
+				render.onKey(render.onKeyData, key);
 			break;
 	}
 	glutPostRedisplay();
@@ -242,4 +243,9 @@ void renderRun() {
 void renderHookDraw(void (*func)(void *data), void *data) {
 	render.onDraw = func;
 	render.onDrawData = data;
+}
+
+void renderHookKey(void (*func)(void *data, unsigned char key), void *data) {
+	render.onKey = func;
+	render.onKeyData = data;
 }
