@@ -13,16 +13,16 @@ typedef struct Chunk {
 	int status;
 	int cookie;
 
-	List *adjacent;
+	List /*Chunk*/ *adjacent;
 
 	Block **blocks;
 } Chunk;
 
 typedef struct ChunkGroup {
 	Vector3i low;
-	List *chunksXS, *chunksXG;
-	List *chunksYS, *chunksYG;
-	List *chunksZS, *chunksZG;
+	List /*Chunk*/ *chunksXS, *chunksXG;
+	List /*Chunk*/ *chunksYS, *chunksYG;
+	List /*Chunk*/ *chunksZS, *chunksZG;
 } ChunkGroup;
 
 typedef struct AnnotatedBlock {
@@ -36,17 +36,17 @@ typedef struct Metachunk {
 	Block *(*generator)(Vector3i);
 
 	int cookie;
-	List *chunks;
+	List /*Chunk*/ *chunks;
 	
 	Vector3i groupSize;
-	List *chunkGroups;
+	List /*ChunkGroup*/ *chunkGroups;
 
 	Chunk *lastChunk;
 	Vector3i lastPos;
 	
 	// chunkUpdate
 	int maxChunksToUpdate;
-	List *chunksToUpdate;
+	List /*Chunk*/ *chunksToUpdate;
 	
 	// chunkgen
 	AnnotatedBlock *annotatedBlocks;

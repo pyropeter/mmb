@@ -81,9 +81,8 @@ void blockDrawDist(Block *block, int x, int y, int z,
 	glPopMatrix();
 }
 
-void drawChunk(Chunk *chunk) {
-/*	// draw chunk's bounding rectangle as wireframe
-
+//! draw chunk's bounding rectangle as wireframe
+void drawChunkBorder(Chunk *chunk) {
 	int x1 = (long long int)chunk->low.x;
 	int y1 = (long long int)chunk->low.y;
 	int z1 = (long long int)chunk->low.z;
@@ -121,7 +120,9 @@ void drawChunk(Chunk *chunk) {
 		glVertex3f(x2, y2, z2);
 	}; glEnd();
 	glEnable(GL_LIGHTING);
-*/
+}
+
+void drawChunk(Chunk *chunk) {
 	if (chunk->blocks == NULL)
 		return;
 
@@ -177,6 +178,40 @@ void findChunks(Chunk *startChunk) {
 	}
 }
 
+void hilightSelection() {
+	int i;
+	Vector3f pos, dir;
+	Chunk *chunk, *prevChunk;
+
+	// we will abuse chunkGet(), so backup it's state
+	Chunk *lastChunk = metachunk->lastChunk;
+	Vector3i lastPos = metachunk->lastPos;
+
+	dir = (Vector3f){camera->dx, camera->dy, camera->dz};
+	pos = (Vector3f){camera->x, camera->y, camera->z};
+	prevChunk = chunkGet(metachunk, camera->pos);
+
+	// just assume dir is always of length 1
+	for (i = 0; i < 20; i++) {
+		pos = VEC3FOP(pos, +, dir);
+		chunk = chunkGet(metachunk, (Vector3i){
+				floor(pos.x), floor(pos.y), floor(pos.z)});
+		
+		if (chunk != prevChunk) {
+			if (chunk->blocks) {
+				// found a solid chunk
+				drawChunkBorder(chunk);
+				break;
+			}
+			prevChunk = chunk;
+		}
+	}
+
+	// restore chunkGet()'s state
+	metachunk->lastChunk = lastChunk;
+	metachunk->lastPos = lastPos;
+}
+
 void worldDrawChunked(void *foo) {
 	metachunk->cookie++;
 
@@ -187,6 +222,7 @@ void worldDrawChunked(void *foo) {
 	Chunk *startChunk = chunkGet(metachunk, camera->pos);
 	startChunk->cookie = metachunk->cookie;
 	findChunks(startChunk);
+	hilightSelection();
 
 	chunkAfterFrame(metachunk);
 
