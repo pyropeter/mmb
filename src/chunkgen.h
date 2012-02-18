@@ -6,7 +6,6 @@
 #define _MMB_CHUNKGEN_H
 
 #include "vector.h"
-#include "chunk.h"
 #include "world.h"
 
 extern void chunkgenInit(World *world);
