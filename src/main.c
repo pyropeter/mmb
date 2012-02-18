@@ -82,45 +82,50 @@ void blockDrawDist(Block *block, int x, int y, int z,
 	glPopMatrix();
 }
 
-//! draw chunk's bounding rectangle as wireframe
-void drawChunkBorder(Chunk *chunk) {
-	int x1 = (long long int)chunk->low.x;
-	int y1 = (long long int)chunk->low.y;
-	int z1 = (long long int)chunk->low.z;
-	int x2 = (long long int)chunk->high.x + 1;
-	int y2 = (long long int)chunk->high.y + 1;
-	int z2 = (long long int)chunk->high.z + 1;
+//! draw block's bounding rectangle as wireframe
+void drawBlockBorder(Vector3i pos) {
+	int x1 = pos.x;
+	int y1 = pos.y;
+	int z1 = pos.z;
+	int x2 = pos.x + 1;
+	int y2 = pos.y + 1;
+	int z2 = pos.z + 1;
 
+	glPushMatrix();
+	glTranslatef(pos.x, pos.y, pos.z);
+	glScalef(1.2, 1.2, 1.2);
+	glTranslatef(-0.1, -0.1, -0.1);
 	glDisable(GL_LIGHTING);
 	glBegin(GL_LINES); {
-		glVertex3f(x1, y1, z1);
-		glVertex3f(x1, y1, z2);
-		glVertex3f(x1, y2, z1);
-		glVertex3f(x1, y2, z2);
-		glVertex3f(x2, y1, z1);
-		glVertex3f(x2, y1, z2);
-		glVertex3f(x2, y2, z1);
-		glVertex3f(x2, y2, z2);
+		glVertex3f(0, 0, 0);
+		glVertex3f(0, 0, 1);
+		glVertex3f(0, 1, 0);
+		glVertex3f(0, 1, 1);
+		glVertex3f(1, 0, 0);
+		glVertex3f(1, 0, 1);
+		glVertex3f(1, 1, 0);
+		glVertex3f(1, 1, 1);
 
-		glVertex3f(x1, y1, z1);
-		glVertex3f(x1, y2, z1);
-		glVertex3f(x1, y1, z2);
-		glVertex3f(x1, y2, z2);
-		glVertex3f(x2, y1, z1);
-		glVertex3f(x2, y2, z1);
-		glVertex3f(x2, y1, z2);
-		glVertex3f(x2, y2, z2);
+		glVertex3f(0, 0, 0);
+		glVertex3f(0, 1, 0);
+		glVertex3f(0, 0, 1);
+		glVertex3f(0, 1, 1);
+		glVertex3f(1, 0, 0);
+		glVertex3f(1, 1, 0);
+		glVertex3f(1, 0, 1);
+		glVertex3f(1, 1, 1);
 
-		glVertex3f(x1, y1, z1);
-		glVertex3f(x2, y1, z1);
-		glVertex3f(x1, y1, z2);
-		glVertex3f(x2, y1, z2);
-		glVertex3f(x1, y2, z1);
-		glVertex3f(x2, y2, z1);
-		glVertex3f(x1, y2, z2);
-		glVertex3f(x2, y2, z2);
+		glVertex3f(0, 0, 0);
+		glVertex3f(1, 0, 0);
+		glVertex3f(0, 0, 1);
+		glVertex3f(1, 0, 1);
+		glVertex3f(0, 1, 0);
+		glVertex3f(1, 1, 0);
+		glVertex3f(0, 1, 1);
+		glVertex3f(1, 1, 1);
 	}; glEnd();
 	glEnable(GL_LIGHTING);
+	glPopMatrix();
 }
 
 void drawChunk(Chunk *chunk) {
@@ -182,6 +187,7 @@ void findChunks(Chunk *startChunk) {
 void hilightSelection() {
 	int i;
 	Vector3f pos, dir;
+	Vector3i posi, lastposi;
 	Chunk *chunk, *prevChunk;
 
 	// we will abuse chunkGet(), so backup it's state
@@ -195,13 +201,13 @@ void hilightSelection() {
 	// just assume dir is always of length 1
 	for (i = 0; i < 20; i++) {
 		pos = VEC3FOP(pos, +, dir);
-		chunk = worldGetChunk(world, (Vector3i){
-				floor(pos.x), floor(pos.y), floor(pos.z)});
-		
+		posi = (Vector3i){floor(pos.x), floor(pos.y), floor(pos.z)};
+		chunk = worldGetChunk(world, posi);
+
 		if (chunk != prevChunk) {
 			if (chunk->blocks) {
 				// found a solid chunk
-				drawChunkBorder(chunk);
+				drawBlockBorder(posi);
 				break;
 			}
 			prevChunk = chunk;
