@@ -7,9 +7,10 @@
 
 #include "vector.h"
 #include "chunk.h"
+#include "world.h"
 
-extern void chunkgenInit(Metachunk *world);
-extern void chunkgenDeinit(Metachunk *world);
-extern void chunkgenCreate(Metachunk *world, Vector3i low);
+extern void chunkgenInit(World *world);
+extern void chunkgenDeinit(World *world);
+extern void chunkgenCreate(World *world, Vector3i low);
 
 #endif /* _MMB_CHUNKGEN_H */

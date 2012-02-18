@@ -10,10 +10,11 @@
 #include "render.h"
 #include "generator.h"
 #include "chunk.h"
+#include "world.h"
 
 static Render *render;
 static Camera *camera;
-static Metachunk *metachunk;
+static World *world;
 
 void blockDrawDist(Block *block, int x, int y, int z,
 		int distX, int distY, int distZ) {
@@ -159,12 +160,12 @@ int isVisible(Chunk *chunk) {
 }
 
 void findChunks(Chunk *startChunk) {
-	chunkUpdate(metachunk, startChunk);
+	worldUpdateChunk(world, startChunk);
 
 	Chunk **chunk = (Chunk**)startChunk->adjacent->mem;
 	for (; (void**)chunk != startChunk->adjacent->nextFree; chunk++) {
-		if ((*chunk)->cookie != metachunk->cookie) {
-			(*chunk)->cookie = metachunk->cookie;
+		if ((*chunk)->cookie != world->cookie) {
+			(*chunk)->cookie = world->cookie;
 
 			// out of range?
 			if (!isVisible(*chunk))
@@ -184,17 +185,17 @@ void hilightSelection() {
 	Chunk *chunk, *prevChunk;
 
 	// we will abuse chunkGet(), so backup it's state
-	Chunk *lastChunk = metachunk->lastChunk;
-	Vector3i lastPos = metachunk->lastPos;
+	Chunk *lastChunk = world->lastChunk;
+	Vector3i lastPos = world->lastPos;
 
 	dir = (Vector3f){camera->dx, camera->dy, camera->dz};
 	pos = (Vector3f){camera->x, camera->y, camera->z};
-	prevChunk = chunkGet(metachunk, camera->pos);
+	prevChunk = worldGetChunk(world, camera->pos);
 
 	// just assume dir is always of length 1
 	for (i = 0; i < 20; i++) {
 		pos = VEC3FOP(pos, +, dir);
-		chunk = chunkGet(metachunk, (Vector3i){
+		chunk = worldGetChunk(world, (Vector3i){
 				floor(pos.x), floor(pos.y), floor(pos.z)});
 		
 		if (chunk != prevChunk) {
@@ -208,23 +209,23 @@ void hilightSelection() {
 	}
 
 	// restore chunkGet()'s state
-	metachunk->lastChunk = lastChunk;
-	metachunk->lastPos = lastPos;
+	world->lastChunk = lastChunk;
+	world->lastPos = lastPos;
 }
 
 void worldDrawChunked(void *foo) {
-	metachunk->cookie++;
+	world->cookie++;
 
 #ifdef MMB_DEBUG_MAIN
 	long timer = startTimer();
 #endif
 
-	Chunk *startChunk = chunkGet(metachunk, camera->pos);
-	startChunk->cookie = metachunk->cookie;
+	Chunk *startChunk = worldGetChunk(world, camera->pos);
+	startChunk->cookie = world->cookie;
 	findChunks(startChunk);
 	hilightSelection();
 
-	chunkAfterFrame(metachunk);
+	worldAfterFrame(world);
 
 #ifdef MMB_DEBUG_MAIN
 	printf("frame done, time: %i s^-6\n", stopTimer(timer));
@@ -241,7 +242,7 @@ int main(int argc, char *argv[]) {
 
 	generatorInit();
 
-	metachunk = chunkInit(generatorGetBlock);
+	world = worldInit(generatorGetBlock);
 
 	renderHookDraw(&worldDrawChunked, NULL);
 	renderRun();

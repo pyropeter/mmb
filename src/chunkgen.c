@@ -9,6 +9,7 @@
 #include "defs.h"
 #include "vector.h"
 #include "chunk.h"
+#include "world.h"
 #include "chunkgen.h"
 
 /**
@@ -16,7 +17,7 @@
  * 
  * This also adds the Chunk to the world's list of chunks.
  */
-Chunk *newChunk(Metachunk *world) {
+Chunk *newChunk(World *world) {
 	Chunk *chunk = knalloc(sizeof(Chunk));
 	chunk->status = 0;
 	chunk->cookie = -1;
@@ -33,7 +34,7 @@ Chunk *newChunk(Metachunk *world) {
  * 
  * This also adds the ChunkGroup to the world's list of ChunkGroups.
  */
-ChunkGroup *newChunkGroup(Metachunk *world, Vector3i low) {
+ChunkGroup *newChunkGroup(World *world, Vector3i low) {
 	ChunkGroup *chunkGroup = knalloc(sizeof(ChunkGroup));
 
 	chunkGroup->low = low;
@@ -79,7 +80,7 @@ void addBlocksToChunk(AnnotatedBlock *blocks, Vector3i size, int z,
 /**
  * Creates a new Chunk, adds Blocks to it, and merges the Chunk with the others
  */
-void handleChunk(Metachunk *world, AnnotatedBlock *blocks,
+void handleChunk(World *world, AnnotatedBlock *blocks,
 		ChunkGroup *chunkGroup, Vector3i size,
 		Vector3i low, int z, AnnotatedBlock *first)
 {
@@ -168,7 +169,7 @@ void handleChunk(Metachunk *world, AnnotatedBlock *blocks,
 	}
 }
 
-void mergeGroup(Metachunk *world, AnnotatedBlock *blocks, Vector3i batchLow,
+void mergeGroup(World *world, AnnotatedBlock *blocks, Vector3i batchLow,
 		Vector3i size, List *chunks, int dir) {
 	Vector3i p, low, high;
 	Chunk **chunk;
@@ -333,7 +334,7 @@ void setDistances(AnnotatedBlock *blocks, Vector3i size) {
 /**
  * Creates all Chunks in the cuboid defined by low and world->groupSize
  */
-void chunkgenCreate(Metachunk *world, Vector3i low) {
+void chunkgenCreate(World *world, Vector3i low) {
 	Vector3i size = world->groupSize;
 	Vector3i high = VEC3IOP(low, +, size);
 	int blockcount = size.x * size.y * size.z;
@@ -454,9 +455,9 @@ void chunkgenCreate(Metachunk *world, Vector3i low) {
 }
 
 /**
- * Initializes the Metachunk members needed by chunkgen.c
+ * Initializes the World members needed by chunkgen.c
  */
-void chunkgenInit(Metachunk *world) {
+void chunkgenInit(World *world) {
 	world->annotatedBlocks = knalloc(
 			world->groupSize.x * world->groupSize.y
 			* world->groupSize.z * sizeof(AnnotatedBlock));
@@ -476,8 +477,8 @@ void chunkgenInit(Metachunk *world) {
 
 
 /**
- * Frees the Metachunk members needed by chunkgen.c
+ * Frees the World members needed by chunkgen.c
  */
-void chunkgenDeinit(Metachunk *world) {
+void chunkgenDeinit(World *world) {
 	free(world->annotatedBlocks);
 }

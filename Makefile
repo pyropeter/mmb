@@ -17,7 +17,7 @@ LIBS = -lGL -lGLU -lglut -lm -lrt
 # * disable assertions
 #CFLAGS = -Wall -DNDEBUG=1
 
-SRCS = src/render.c src/generator.c src/main.c src/chunk.c src/defs.c \
+SRCS = src/render.c src/generator.c src/main.c src/world.c src/defs.c \
 	src/chunkgen.c
 MAIN = mmb
 
@@ -45,7 +45,9 @@ depend: $(SRCS)
 src/render.o: src/render.h src/defs.h src/vector.h
 src/generator.o: src/defs.h src/vector.h src/generator.h
 src/main.o: src/defs.h src/vector.h src/render.h src/generator.h
-src/main.o: src/chunk.h
-src/chunk.o: src/defs.h src/vector.h src/chunk.h src/chunkgen.h
+src/main.o: src/chunk.h src/world.h
+src/world.o: src/defs.h src/vector.h src/chunk.h src/chunkgen.h
+src/world.o: src/world.h
 src/defs.o: src/defs.h
-src/chunkgen.o: src/defs.h src/vector.h src/chunk.h src/chunkgen.h
+src/chunkgen.o: src/defs.h src/vector.h src/chunk.h src/world.h
+src/chunkgen.o: src/chunkgen.h

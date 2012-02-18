@@ -9,14 +9,15 @@
 #include "vector.h"
 #include "chunk.h"
 #include "chunkgen.h"
+#include "world.h"
 
 /**
- * Creates and initializes a metachunk
+ * Creates and initializes a World
  * 
  * @param gen		A block generator function
  */
-Metachunk *chunkInit(Block *(*gen)(Vector3i)) {
-	Metachunk *world = knalloc(sizeof(Metachunk));
+World *worldInit(Block *(*gen)(Vector3i)) {
+	World *world = knalloc(sizeof(World));
 	world->cookie = 0;
 	world->chunks = listNew(sizeof(Chunk*));
 
@@ -35,7 +36,7 @@ Metachunk *chunkInit(Block *(*gen)(Vector3i)) {
 	return world;
 }
 
-Chunk *searchAllChunks(Metachunk *world, Vector3i pos) {
+Chunk *searchAllChunks(World *world, Vector3i pos) {
 	Chunk **chunk;
 	LISTITER(world->chunks, chunk, Chunk**) {
 		if (VEC3CMP((*chunk)->low, <=, pos) &&
@@ -53,7 +54,7 @@ Chunk *searchAllChunks(Metachunk *world, Vector3i pos) {
  * 
  * If no chunk at that position exists, it is generated and returned.
  */
-Chunk *chunkGet(Metachunk *world, Vector3i pos) {
+Chunk *worldGetChunk(World *world, Vector3i pos) {
 	if (world->lastChunk) {
 		// check if position has changed at all
 		if (VEC3CMP(world->lastPos, ==, pos))
@@ -98,9 +99,9 @@ Chunk *chunkGet(Metachunk *world, Vector3i pos) {
 }
 
 /**
- * Marks a chunk for updating by chunkAfterFrame()
+ * Marks a chunk for updating by worldAfterFrame()
  */
-void chunkUpdate(Metachunk *world, Chunk *chunk) {
+void worldUpdateChunk(World *world, Chunk *chunk) {
 	if (chunk->status == 0)
 		return;
 
@@ -108,12 +109,12 @@ void chunkUpdate(Metachunk *world, Chunk *chunk) {
 }
 
 /**
- * Updates the Chunks marked by chunkUpdate()
+ * Updates the Chunks marked by worldUpdateChunk()
  * 
  * This generates one ChunkGroup adjacent to each marked Chunk.
  * At most world->maxChunksToUpdate Chunks are updated (to limit the lag).
  */
-void chunkAfterFrame(Metachunk *world) {
+void worldAfterFrame(World *world) {
 	Chunk** chunk;
 	Vector3i pos;
 	int count = world->maxChunksToUpdate;
