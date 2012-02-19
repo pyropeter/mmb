@@ -28,6 +28,7 @@ typedef struct {
 
 extern Render *renderInit(int argc, char *argv[]);
 extern void renderRun();
+extern void renderDebug();
 extern void renderHookDraw(void (*func)(void *data), void *data);
 
 #endif /* _MMB_RENDER_H */

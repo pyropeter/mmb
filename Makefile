@@ -18,7 +18,7 @@ LIBS = -lGL -lGLU -lglut -lm -lrt
 #CFLAGS = -Wall -DNDEBUG=1
 
 SRCS = src/render.c src/generator.c src/main.c src/world.c src/defs.c \
-	src/chunkgen.c
+	src/chunkgen.c src/raytrace.c
 MAIN = mmb
 
 OBJS = $(SRCS:.c=.o)
@@ -45,9 +45,11 @@ depend: $(SRCS)
 src/render.o: src/render.h src/defs.h src/vector.h
 src/generator.o: src/defs.h src/vector.h src/generator.h
 src/main.o: src/defs.h src/vector.h src/render.h src/generator.h
-src/main.o: src/chunk.h src/world.h
+src/main.o: src/chunk.h src/world.h src/raytrace.h
 src/world.o: src/defs.h src/vector.h src/chunk.h src/chunkgen.h
 src/world.o: src/world.h
 src/defs.o: src/defs.h
 src/chunkgen.o: src/defs.h src/vector.h src/chunk.h src/world.h
 src/chunkgen.o: src/chunkgen.h
+src/raytrace.o: src/vector.h src/chunk.h src/defs.h src/world.h
+src/raytrace.o: src/raytrace.h

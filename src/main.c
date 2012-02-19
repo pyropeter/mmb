@@ -11,10 +11,12 @@
 #include "generator.h"
 #include "chunk.h"
 #include "world.h"
+#include "raytrace.h"
 
 static Render *render;
 static Camera *camera;
 static World *world;
+static Ray ray;
 
 void blockDrawDist(Block *block, int x, int y, int z,
 		int distX, int distY, int distZ) {
@@ -82,15 +84,49 @@ void blockDrawDist(Block *block, int x, int y, int z,
 	glPopMatrix();
 }
 
+//! draw chunk's bounding rectangle as wireframe
+void drawChunkBorder(Chunk *chunk) {
+	int x1 = (long long int)chunk->low.x;
+	int y1 = (long long int)chunk->low.y;
+	int z1 = (long long int)chunk->low.z;
+	int x2 = (long long int)chunk->high.x + 1;
+	int y2 = (long long int)chunk->high.y + 1;
+	int z2 = (long long int)chunk->high.z + 1;
+
+	glDisable(GL_LIGHTING);
+	glBegin(GL_LINES); {
+		glVertex3f(x1, y1, z1);
+		glVertex3f(x1, y1, z2);
+		glVertex3f(x1, y2, z1);
+		glVertex3f(x1, y2, z2);
+		glVertex3f(x2, y1, z1);
+		glVertex3f(x2, y1, z2);
+		glVertex3f(x2, y2, z1);
+		glVertex3f(x2, y2, z2);
+
+		glVertex3f(x1, y1, z1);
+		glVertex3f(x1, y2, z1);
+		glVertex3f(x1, y1, z2);
+		glVertex3f(x1, y2, z2);
+		glVertex3f(x2, y1, z1);
+		glVertex3f(x2, y2, z1);
+		glVertex3f(x2, y1, z2);
+		glVertex3f(x2, y2, z2);
+
+		glVertex3f(x1, y1, z1);
+		glVertex3f(x2, y1, z1);
+		glVertex3f(x1, y1, z2);
+		glVertex3f(x2, y1, z2);
+		glVertex3f(x1, y2, z1);
+		glVertex3f(x2, y2, z1);
+		glVertex3f(x1, y2, z2);
+		glVertex3f(x2, y2, z2);
+	}; glEnd();
+	glEnable(GL_LIGHTING);
+}
+
 //! draw block's bounding rectangle as wireframe
 void drawBlockBorder(Vector3i pos) {
-	int x1 = pos.x;
-	int y1 = pos.y;
-	int z1 = pos.z;
-	int x2 = pos.x + 1;
-	int y2 = pos.y + 1;
-	int z2 = pos.z + 1;
-
 	glPushMatrix();
 	glTranslatef(pos.x, pos.y, pos.z);
 	glScalef(1.2, 1.2, 1.2);
@@ -186,8 +222,67 @@ void findChunks(Chunk *startChunk) {
 
 void hilightSelection() {
 	int i;
+
+	// we will abuse chunkGet(), so backup it's state
+	Chunk *lastChunk = world->lastChunk;
+	Vector3i lastPos = world->lastPos;
+
+	ray.posi = camera->pos;
+	ray.posf.x = camera->x - camera->pos.x;
+	ray.posf.y = camera->y - camera->pos.y;
+	ray.posf.z = camera->z - camera->pos.z;
+	ray.dir = (Vector3f){camera->dx, camera->dy, camera->dz};
+/*
+	ray.posi = (Vector3i){-5,1,-7};
+	ray.posf = (Vector3f){0.8,0.5,0.6};
+	ray.dir  = (Vector3f){-0.5,-0.01,-0.9};
+
+	Vector3f start = VEC3FOP(ray.posf, +, ray.posi);
+	Vector3f len  = (Vector3f){100,100,100};
+	Vector3f rayvec = VEC3FOP(ray.dir, *, len);
+	Vector3f end = VEC3FOP(start, +, rayvec);
+	glDisable(GL_LIGHTING);
+	glBegin(GL_LINES); {
+		glVertex3f(start.x, start.y, start.z);
+		glVertex3f(end.x, end.y, end.z);
+	}; glEnd();
+	glEnable(GL_LIGHTING);
+*/
+	ray.chunk = worldGetChunk(world, ray.posi);
+	ray.world = world;
+	ray.factor = 0;
+
+	printf("BEGIN ---------------------\n");
+	VECPRINT(ray.posi, " (posi)\n");
+	VECFPRINT(ray.posf, " (posf)\n");
+	VECFPRINT(ray.dir, " (dir)\n");
+	renderDebug();
+	for (i = 0; i < 20 && ray.chunk; i++) {
+		if (ray.chunk->blocks) {
+			// found a solid chunk
+			printf("FOUND\n");
+			drawBlockBorder(ray.first);
+			break;
+		}
+
+		raytraceNext(&ray);
+//		drawBlockBorder(ray.first);
+//		drawChunkBorder(ray.chunk);
+		VECPRINT(ray.chunk->low, " (low) \t\t");
+		VECPRINT(ray.chunk->high, " (high)\n");
+		VECPRINT(ray.first, " (first)\n");
+	}
+	printf("END -----------------------\n");
+
+	// restore chunkGet()'s state
+	world->lastChunk = lastChunk;
+	world->lastPos = lastPos;
+}
+
+void hilightSelection_() {
+	int i;
 	Vector3f pos, dir;
-	Vector3i posi, lastposi;
+	Vector3i posi;
 	Chunk *chunk, *prevChunk;
 
 	// we will abuse chunkGet(), so backup it's state

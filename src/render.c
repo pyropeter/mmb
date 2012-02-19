@@ -168,7 +168,7 @@ void onDisplay() {
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
+
 	double x = render.camera.x;
 	double y = render.camera.y;
 	double z = render.camera.z;
@@ -178,6 +178,9 @@ void onDisplay() {
 			y + render.camera.dy,
 			z + render.camera.dz,
 			0, 1, 0);
+
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_LIGHTING);
 
 	GLfloat ambientColor[] = {1, 1, 1, 1};
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambientColor);
@@ -195,6 +198,24 @@ void onDisplay() {
 	render.vertices = 0;
 	if (render.onDraw)
 		render.onDraw(render.onDrawData);
+
+	// draw pointer
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glDisable(GL_LIGHTING);
+	glDisable(GL_DEPTH_TEST);
+	gluOrtho2D(0,1,0,1);
+	glBegin(GL_LINES); {
+		glVertex2f(0.5,0.45);
+		glVertex2f(0.5,0.55);
+		glVertex2f(0.45,0.5);
+		glVertex2f(0.55,0.5);
+	}; glEnd();
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
 
 	glutSwapBuffers();
 }
