@@ -31,6 +31,10 @@ extern void **listSearch(List *list, void *element);
 #define DIR_ZS 32
 #define DIR_OPPOSITE(dir) ((dir & 21) ? dir << 1 : dir >> 1)
 
+#define PLANE_XY 1
+#define PLANE_XZ 2
+#define PLANE_YZ 4
+
 extern long startTimer();
 extern long stopTimer(long start);
 
