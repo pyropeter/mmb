@@ -31,7 +31,7 @@ Block *generatorGetBlock(Vector3i pos) {
 				divRoundDown(pos.x * TABLELEN, 20), TABLELEN)]
 			* cosTable[modPositive(
 				divRoundDown(pos.z * TABLELEN, 30), TABLELEN)])
-			/ 1000000000);
+			/ 500000000);
 
 	if (height <= pos.y)
 		return blocks;

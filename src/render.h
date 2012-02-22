@@ -23,6 +23,8 @@ typedef struct {
 	Camera camera;
 	void (*onDraw)(void *data);
 	void *onDrawData;
+	void (*onMouse)(int button, int state, void *data);
+	void *onMouseData;
 	int vertices;
 } Render;
 
@@ -30,5 +32,7 @@ extern Render *renderInit(int argc, char *argv[]);
 extern void renderRun();
 extern void renderDebug();
 extern void renderHookDraw(void (*func)(void *data), void *data);
+extern void renderHookMouse(void (*func)(int button, int state, void *data),
+		void *data);
 
 #endif /* _MMB_RENDER_H */

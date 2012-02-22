@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
-#include <signal.h>
+#include <assert.h>
 
 #include "defs.h"
 
@@ -85,6 +85,21 @@ void **listSearch(List *list, void *ptr) {
 		}
 	}
 	return NULL;
+}
+
+void listReplace(List *list, void *old, void *new) {
+	void **ptr = listSearch(list, old);
+	assert(ptr != NULL);
+	*ptr = new;
+}
+
+void listRemove(List *list, void *element) {
+	void **ptr = listSearch(list, element);
+	assert(ptr != NULL);
+
+	// overwrite the to-be-removed value with the last entry of the list
+	list->nextFree--;
+	*ptr = *(list->nextFree);
 }
 
 /**

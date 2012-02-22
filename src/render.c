@@ -86,17 +86,22 @@ void onPassiveMotion(int x, int y) {
 	glutPostRedisplay();
 }
 
+void renderOnMouse(int button, int state, int x, int y);
+void renderOnMouseHook(int button, int state, int x, int y);
+
 void catchPointer() {
 	glutSetCursor(GLUT_CURSOR_NONE);
 	int cx = glutGet(GLUT_WINDOW_WIDTH) / 2;
 	int cy = glutGet(GLUT_WINDOW_HEIGHT) / 2;
 	glutWarpPointer(cx, cy);
 	glutPassiveMotionFunc(&onPassiveMotion);
+	glutMouseFunc(&renderOnMouseHook);
 }
 
 void freePointer() {
 	glutSetCursor(GLUT_CURSOR_INHERIT);
 	glutPassiveMotionFunc(NULL);
+	glutMouseFunc(&renderOnMouse);
 }
 
 void onReshape(int w, int h) {
@@ -155,10 +160,15 @@ void onKeyboard(unsigned char key, int x, int y) {
 	glutPostRedisplay();
 }
 
-void onMouse(int button, int state, int x, int y) {
+void renderOnMouse(int button, int state, int x, int y) {
 	if (state == GLUT_UP && button == GLUT_LEFT_BUTTON) {
 		catchPointer();
 	}
+}
+
+void renderOnMouseHook(int button, int state, int x, int y) {
+	if (render.onMouse)
+		render.onMouse(button, state, render.onDrawData);
 }
 
 void onDisplay() {
@@ -249,7 +259,7 @@ Render *renderInit(int argc, char *argv[]) {
 
 	glutReshapeFunc(&onReshape);
 	glutKeyboardFunc(&onKeyboard);
-	glutMouseFunc(&onMouse);
+	glutMouseFunc(&renderOnMouse);
 	glutDisplayFunc(&onDisplay);
 	glutIdleFunc(&onIdle);
 
@@ -264,3 +274,11 @@ void renderHookDraw(void (*func)(void *data), void *data) {
 	render.onDraw = func;
 	render.onDrawData = data;
 }
+
+void renderHookMouse(void (*func)(int button, int state, void *data),
+		void *data)
+{
+	render.onMouse = func;
+	render.onMouseData = data;
+}
+

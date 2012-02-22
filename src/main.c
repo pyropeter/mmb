@@ -12,6 +12,7 @@
 #include "chunk.h"
 #include "world.h"
 #include "raytrace.h"
+#include "chunksplit.h"
 
 static Render *render;
 static Camera *camera;
@@ -168,6 +169,8 @@ void drawChunk(Chunk *chunk) {
 	if (chunk->blocks == NULL)
 		return;
 
+	drawChunkBorder(chunk);
+
 	Block **block = chunk->blocks;
 
 	int x, y, z;
@@ -252,15 +255,16 @@ void hilightSelection() {
 	ray.world = world;
 	ray.factor = 0;
 
-	printf("BEGIN ---------------------\n");
+/*	printf("BEGIN ---------------------\n");
 	VECPRINT(ray.posi, " (posi)\n");
 	VECFPRINT(ray.posf, " (posf)\n");
 	VECFPRINT(ray.dir, " (dir)\n");
 	renderDebug();
+*/
 	for (i = 0; i < 20 && ray.chunk; i++) {
 		if (ray.chunk->blocks) {
 			// found a solid chunk
-			printf("FOUND\n");
+//			printf("FOUND\n");
 			drawBlockBorder(ray.first);
 			break;
 		}
@@ -268,46 +272,11 @@ void hilightSelection() {
 		raytraceNext(&ray);
 //		drawBlockBorder(ray.first);
 //		drawChunkBorder(ray.chunk);
-		VECPRINT(ray.chunk->low, " (low) \t\t");
-		VECPRINT(ray.chunk->high, " (high)\n");
-		VECPRINT(ray.first, " (first)\n");
+//		VECPRINT(ray.chunk->low, " (low) \t\t");
+//		VECPRINT(ray.chunk->high, " (high)\n");
+//		VECPRINT(ray.first, " (first)\n");
 	}
-	printf("END -----------------------\n");
-
-	// restore chunkGet()'s state
-	world->lastChunk = lastChunk;
-	world->lastPos = lastPos;
-}
-
-void hilightSelection_() {
-	int i;
-	Vector3f pos, dir;
-	Vector3i posi;
-	Chunk *chunk, *prevChunk;
-
-	// we will abuse chunkGet(), so backup it's state
-	Chunk *lastChunk = world->lastChunk;
-	Vector3i lastPos = world->lastPos;
-
-	dir = (Vector3f){camera->dx, camera->dy, camera->dz};
-	pos = (Vector3f){camera->x, camera->y, camera->z};
-	prevChunk = worldGetChunk(world, camera->pos);
-
-	// just assume dir is always of length 1
-	for (i = 0; i < 20; i++) {
-		pos = VEC3FOP(pos, +, dir);
-		posi = (Vector3i){floor(pos.x), floor(pos.y), floor(pos.z)};
-		chunk = worldGetChunk(world, posi);
-
-		if (chunk != prevChunk) {
-			if (chunk->blocks) {
-				// found a solid chunk
-				drawBlockBorder(posi);
-				break;
-			}
-			prevChunk = chunk;
-		}
-	}
+//	printf("END -----------------------\n");
 
 	// restore chunkGet()'s state
 	world->lastChunk = lastChunk;
@@ -335,6 +304,14 @@ void worldDrawChunked(void *foo) {
 	fflush(stdout);
 }
 
+void onMouse(int button, int state, void *data)
+{
+	if (state == GLUT_UP && button == GLUT_LEFT_BUTTON) {
+//		chunksplitSplit(world, ray.chunk, PLANE_YZ, ray.first.x);
+		chunksplitSplit(world, ray.chunk, PLANE_XZ, ray.first.y);
+	}
+}
+
 int main(int argc, char *argv[]) {
 	printf("MMB version %s, \"White Cubes\"\n\n", VERSION);
 
@@ -346,6 +323,7 @@ int main(int argc, char *argv[]) {
 	world = worldInit(generatorGetBlock);
 
 	renderHookDraw(&worldDrawChunked, NULL);
+	renderHookMouse(&onMouse, NULL);
 	renderRun();
 	return EXIT_SUCCESS;
 }

@@ -19,6 +19,8 @@ extern int listLen(List *list);
 extern void listEmpty(List *list);
 extern void listInsert(List *list, void *element);
 extern void **listSearch(List *list, void *element);
+extern void listReplace(List *list, void *oldelement, void *newelement);
+extern void listRemove(List *list, void *element);
 
 #define LISTITER(list, var, type) \
 	for (var = (type)(list)->mem; (void**)var != (list)->nextFree; var++)
