@@ -134,10 +134,6 @@ void updateWorldChunkGroups(World *world,
 // world->chunksToUpdate is not updated, keep that in mind.
 void chunksplitSplitOnce(World *world, Chunk *chunk, int cutDir, int cutPos)
 {
-	printf("SplitOnce: %i at %i, chunk ", cutDir, cutPos);
-	VECPRINT(chunk->low, " (low) ");
-	VECPRINT(chunk->high, " (high)\n");
-
 	Chunk *one = knalloc(sizeof(Chunk));
 	Chunk *two = knalloc(sizeof(Chunk));
 
@@ -200,8 +196,10 @@ void chunksplitSplitOnce(World *world, Chunk *chunk, int cutDir, int cutPos)
 	// update world->chunkGroups
 	updateWorldChunkGroups(world, chunk, one, two);
 
-	// TODO: free old chunk
-	printf("DEAD: %p\n", chunk);
+	// finished; free the memory:
+	free(chunk->blocks);
+	listFree(chunk->adjacent);
+	free(chunk);
 }
 
 Chunk * chunksplitSplit(World *world, Vector3i pos)

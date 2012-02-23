@@ -169,7 +169,7 @@ void drawChunk(Chunk *chunk) {
 	if (chunk->blocks == NULL)
 		return;
 
-	drawChunkBorder(chunk);
+//	drawChunkBorder(chunk);
 
 	Block **block = chunk->blocks;
 
