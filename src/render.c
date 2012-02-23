@@ -77,7 +77,7 @@ void onPassiveMotion(int x, int y) {
 	int dy = y - cy;
 	if (dx == 0 && dy == 0)
 		return;
-	
+
 	float ax = dy * render.mouseSens * M_PI;
 	float ay = dx * render.mouseSens * M_PI * 2;
 	rotateCamera(ax, -ay);
@@ -238,7 +238,7 @@ Render *renderInit(int argc, char *argv[]) {
 	render.onDraw = NULL;
 	render.onDrawData = NULL;
 
-	render.mouseSens = 1.0/3000;
+	render.mouseSens = 1.0/5000;
 
 	render.camera.range = 10;
 	moveCamera(0, 2, 0);
