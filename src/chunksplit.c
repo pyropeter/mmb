@@ -87,21 +87,25 @@ void updateChunkGroup(World *world, ChunkGroup *group,
 		low.y + world->groupSize.y - 1,
 		low.z + world->groupSize.z - 1};
 
-#define UPDATECHUNKGROUPCHECK(chunksXX, var) \
+#define UPDATECHUNKGROUPCHECK(XX, var) \
 	if (chunk->var == var) { \
-		listRemove(group->chunksXX, chunk); \
-		if (one->var == var) \
-			listInsert(group->chunksXX, one); \
-		if (two->var == var) \
-			listInsert(group->chunksXX, two); \
+		listRemove(group->chunks ## XX, chunk); \
+		if (one->var == var) { \
+			listInsert(group->chunks ## XX, one); \
+			one->status += DIR_ ## XX; \
+		} \
+		if (two->var == var) { \
+			listInsert(group->chunks ## XX, two); \
+			two->status += DIR_ ## XX; \
+		} \
 	}
 
-	UPDATECHUNKGROUPCHECK(chunksXS, low.x)
-	UPDATECHUNKGROUPCHECK(chunksYS, low.y)
-	UPDATECHUNKGROUPCHECK(chunksZS, low.z)
-	UPDATECHUNKGROUPCHECK(chunksXG, high.x)
-	UPDATECHUNKGROUPCHECK(chunksYG, high.y)
-	UPDATECHUNKGROUPCHECK(chunksZG, high.z)
+	UPDATECHUNKGROUPCHECK(XS, low.x)
+	UPDATECHUNKGROUPCHECK(YS, low.y)
+	UPDATECHUNKGROUPCHECK(ZS, low.z)
+	UPDATECHUNKGROUPCHECK(XG, high.x)
+	UPDATECHUNKGROUPCHECK(YG, high.y)
+	UPDATECHUNKGROUPCHECK(ZG, high.z)
 }
 
 void updateWorldChunkGroups(World *world,
@@ -118,18 +122,21 @@ void updateWorldChunkGroups(World *world,
 	LISTITER(world->chunkGroups, group, ChunkGroup**) {
 		if (VEC3CMP((*group)->low, ==, low)) {
 			updateChunkGroup(world, *group, chunk, one, two);
+			return;
 		}
 	}
+
+	assert(0);
 }
 
 // world->chunksToUpdate is not updated, keep that in mind.
-void chunksplitSplit(World *world, Chunk *chunk, int cutDir, int cutPos)
+void chunksplitSplitOnce(World *world, Chunk *chunk, int cutDir, int cutPos)
 {
 	Chunk *one = knalloc(sizeof(Chunk));
 	Chunk *two = knalloc(sizeof(Chunk));
 
-	one->status = two->status = chunk->status;
-	one->cookie = two->cookie = chunk->cookie;
+	one->status = two->status = 0;
+	one->cookie = two->cookie = 0;
 
 	one->low = two->low = chunk->low;
 	one->high = two->high = chunk->high;
@@ -188,5 +195,25 @@ void chunksplitSplit(World *world, Chunk *chunk, int cutDir, int cutPos)
 	updateWorldChunkGroups(world, chunk, one, two);
 
 	// TODO: free old chunk
+}
+
+Chunk * chunksplitSplit(World *world, Vector3i pos)
+{
+	Chunk *chunk = worldGetChunk(world, pos);
+
+#define CHECK(plane, low, xyz, diff) \
+	if (chunk->low.xyz < pos.xyz) { \
+		chunksplitSplitOnce(world, chunk, plane, pos.xyz - diff); \
+		chunk = worldGetChunk(world, pos); \
+	}
+
+	CHECK(PLANE_YZ, low, x, 1)
+	CHECK(PLANE_XZ, low, y, 1)
+	CHECK(PLANE_XY, low, z, 1)
+	CHECK(PLANE_YZ, high, x, 0)
+	CHECK(PLANE_XZ, high, y, 0)
+	CHECK(PLANE_XY, high, z, 0)
+
+	return chunk;
 }
 

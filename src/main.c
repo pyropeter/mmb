@@ -304,11 +304,28 @@ void worldDrawChunked(void *foo) {
 	fflush(stdout);
 }
 
+void setBlock(World *world, Vector3i pos, Block *block)
+{
+	Chunk *chunk = chunksplitSplit(world, pos);
+
+	if (*block == ' ') {
+		free(chunk->blocks);
+		chunk->blocks = NULL;
+	} else {
+		if (chunk->blocks == NULL)
+			chunk->blocks = knalloc(sizeof(Block*));
+		chunk->blocks[0] = block;
+	}
+}
+
 void onMouse(int button, int state, void *data)
 {
 	if (state == GLUT_UP && button == GLUT_LEFT_BUTTON) {
 //		chunksplitSplit(world, ray.chunk, PLANE_YZ, ray.first.x);
-		chunksplitSplit(world, ray.chunk, PLANE_XZ, ray.first.y);
+//		chunksplitSplit(world, ray.chunk, PLANE_XZ, ray.first.y);
+		setBlock(world, ray.first, " ");
+	} else if (state == GLUT_UP && button == GLUT_RIGHT_BUTTON) {
+		setBlock(world, ray.last, "s");
 	}
 }
 
