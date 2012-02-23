@@ -330,7 +330,7 @@ void onMouse(int button, int state, void *data)
 }
 
 int main(int argc, char *argv[]) {
-	printf("MMB version %s, \"White Cubes\"\n\n", VERSION);
+	printf("MMB version %s, \"White, Removable Cubes\"\n\n", VERSION);
 
 	render = renderInit(argc, argv);
 	camera = &(render->camera);

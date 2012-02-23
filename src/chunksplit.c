@@ -204,9 +204,6 @@ void chunksplitSplitOnce(World *world, Chunk *chunk, int cutDir, int cutPos)
 
 Chunk * chunksplitSplit(World *world, Vector3i pos)
 {
-	printf("Split: ");
-	VECPRINT(pos, "\n");
-
 	Chunk *chunk = worldGetChunk(world, pos);
 
 #define CHECK(plane, lowhigh, xyz, cmp, diff) \
