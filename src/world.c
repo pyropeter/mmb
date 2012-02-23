@@ -120,6 +120,7 @@ void worldAfterFrame(World *world) {
 	int count = world->maxChunksToUpdate;
 
 	LISTITER(world->chunksToUpdate, chunk, Chunk**) {
+		printf("CHUNK: %p\n", *chunk);
 #ifdef MMB_DEBUG_CHUNK
 		printf("Updating chunk %p, status %i\n",
 				*chunk, (*chunk)->status);

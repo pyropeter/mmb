@@ -238,7 +238,7 @@ Render *renderInit(int argc, char *argv[]) {
 	render.onDraw = NULL;
 	render.onDrawData = NULL;
 
-	render.mouseSens = 1.0/1000;
+	render.mouseSens = 1.0/3000;
 
 	render.camera.range = 10;
 	moveCamera(0, 2, 0);

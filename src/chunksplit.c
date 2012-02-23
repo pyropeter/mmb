@@ -92,11 +92,13 @@ void updateChunkGroup(World *world, ChunkGroup *group,
 		listRemove(group->chunks ## XX, chunk); \
 		if (one->var == var) { \
 			listInsert(group->chunks ## XX, one); \
-			one->status += DIR_ ## XX; \
+			if (chunk->status & DIR_ ## XX) \
+				one->status += DIR_ ## XX; \
 		} \
 		if (two->var == var) { \
 			listInsert(group->chunks ## XX, two); \
-			two->status += DIR_ ## XX; \
+			if (chunk->status & DIR_ ## XX) \
+				two->status += DIR_ ## XX; \
 		} \
 	}
 
@@ -132,6 +134,10 @@ void updateWorldChunkGroups(World *world,
 // world->chunksToUpdate is not updated, keep that in mind.
 void chunksplitSplitOnce(World *world, Chunk *chunk, int cutDir, int cutPos)
 {
+	printf("SplitOnce: %i at %i, chunk ", cutDir, cutPos);
+	VECPRINT(chunk->low, " (low) ");
+	VECPRINT(chunk->high, " (high)\n");
+
 	Chunk *one = knalloc(sizeof(Chunk));
 	Chunk *two = knalloc(sizeof(Chunk));
 
@@ -195,24 +201,34 @@ void chunksplitSplitOnce(World *world, Chunk *chunk, int cutDir, int cutPos)
 	updateWorldChunkGroups(world, chunk, one, two);
 
 	// TODO: free old chunk
+	printf("DEAD: %p\n", chunk);
 }
 
 Chunk * chunksplitSplit(World *world, Vector3i pos)
 {
+	printf("Split: ");
+	VECPRINT(pos, "\n");
+
 	Chunk *chunk = worldGetChunk(world, pos);
 
-#define CHECK(plane, low, xyz, diff) \
-	if (chunk->low.xyz < pos.xyz) { \
+#define CHECK(plane, lowhigh, xyz, cmp, diff) \
+	if (chunk->lowhigh.xyz cmp pos.xyz) { \
 		chunksplitSplitOnce(world, chunk, plane, pos.xyz - diff); \
 		chunk = worldGetChunk(world, pos); \
 	}
 
-	CHECK(PLANE_YZ, low, x, 1)
-	CHECK(PLANE_XZ, low, y, 1)
-	CHECK(PLANE_XY, low, z, 1)
-	CHECK(PLANE_YZ, high, x, 0)
-	CHECK(PLANE_XZ, high, y, 0)
-	CHECK(PLANE_XY, high, z, 0)
+	CHECK(PLANE_YZ, low, x, <, 1)
+	assert(chunk->low.x == pos.x);
+	CHECK(PLANE_XZ, low, y, <, 1)
+	assert(chunk->low.y == pos.y);
+	CHECK(PLANE_XY, low, z, <, 1)
+	assert(chunk->low.z == pos.z);
+	CHECK(PLANE_YZ, high, x, >, 0)
+	assert(chunk->high.x == pos.x);
+	CHECK(PLANE_XZ, high, y, >, 0)
+	assert(chunk->high.y == pos.y);
+	CHECK(PLANE_XY, high, z, >, 0)
+	assert(chunk->high.z == pos.z);
 
 	return chunk;
 }

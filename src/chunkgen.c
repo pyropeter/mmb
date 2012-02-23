@@ -475,7 +475,6 @@ void chunkgenInit(World *world) {
 	}
 }
 
-
 /**
  * Frees the World members needed by chunkgen.c
  */
