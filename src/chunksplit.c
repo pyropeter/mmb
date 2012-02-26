@@ -4,8 +4,6 @@
 #include <assert.h>
 
 #include "defs.h"
-#include "chunk.h"
-#include "world.h"
 #include "chunksplit.h"
 
 void moveBlocks(Chunk *old, Chunk *new)

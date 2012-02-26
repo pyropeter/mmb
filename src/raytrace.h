@@ -1,7 +1,6 @@
 //! @file
 
 #include "vector.h"
-#include "chunk.h"
 #include "world.h"
 
 typedef struct Ray {

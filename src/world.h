@@ -33,5 +33,6 @@ extern World *worldInit(Block *(*gen)(Vector3i));
 extern Chunk *worldGetChunk(World *world, Vector3i pos);
 extern void worldUpdateChunk(World *world, Chunk *chunk);
 extern void worldAfterFrame(World *world);
+extern void worldSetBlock(World *world, Vector3i pos, Block *block);
 
 #endif /* _MMB_WORLD_H */

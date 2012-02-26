@@ -1,0 +1,53 @@
+#!/usr/bin/awk -f
+
+BEGIN {
+	FS="[\"]";
+	print "digraph {";
+	print "rankdir = LR";
+
+#	print "subgraph cluster_lib {";
+#	print "label = \"Lib\";";
+#	print "\"defs.h\";";
+#	print "\"defs.c\";";
+#	print "\"vector.h\";";
+#	print "}";
+
+	print "subgraph cluster_generator {";
+	print "label = \"Generator\";";
+	print "\"generator.h\";";
+	print "\"generator.c\";";
+	print "}";
+
+	print "subgraph cluster_opengl {";
+	print "label = \"OpenGL\";";
+	print "\"GL/gl.h\";";
+	print "\"GL/freeglut.h\";";
+	print "}";
+
+	print "subgraph cluster_world {";
+	print "label = \"World\";";
+	print "\"block.h\";";
+	print "\"chunk.h\";";
+	print "\"world.h\";";
+	print "\"world.c\";";
+	print "\"chunkgen.h\";";
+	print "\"chunkgen.c\";";
+	print "\"chunksplit.h\";";
+	print "\"chunksplit.c\";";
+	print "}";
+}
+
+END {
+	print "}";
+}
+
+/^#include "/ {
+	included = $2;
+	including = FILENAME;
+	sub(/^.*src\//, "", including);
+
+	if (included !~ /vector.h|defs.c|defs.h/) {
+		print "\"" including "\" -> \"" included "\"";
+	}
+}
+

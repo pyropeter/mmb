@@ -7,6 +7,7 @@
 
 #include "defs.h"
 #include "vector.h"
+#include "block.h"
 
 typedef struct Chunk {
 	Vector3i low, high;

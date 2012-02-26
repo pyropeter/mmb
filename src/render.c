@@ -11,8 +11,8 @@
 #include <string.h>
 #include <math.h>
 
-#include <GL/gl.h>
-#include <GL/freeglut.h>
+#include "GL/gl.h"
+#include "GL/freeglut.h"
 #if !defined(GLUT_WHEEL_UP)
 #  define GLUT_WHEEL_UP   3
 #  define GLUT_WHEEL_DOWN 4

@@ -3,8 +3,6 @@
 
 #include <sys/types.h>
 
-typedef char Block;
-
 extern void *knalloc(size_t size);
 
 typedef struct List {

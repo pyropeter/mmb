@@ -1,10 +1,7 @@
 //! @file
 
-#include "stdio.h"
+#include <stdio.h>
 
-#include "vector.h"
-#include "chunk.h"
-#include "world.h"
 #include "raytrace.h"
 
 void getFace(Ray *r)

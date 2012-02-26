@@ -7,9 +7,6 @@
 #include <assert.h>
 
 #include "defs.h"
-#include "vector.h"
-#include "chunk.h"
-#include "world.h"
 #include "chunkgen.h"
 
 /**

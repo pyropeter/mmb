@@ -7,9 +7,9 @@
 
 #include "defs.h"
 #include "vector.h"
-#include "chunk.h"
-#include "chunkgen.h"
 #include "world.h"
+#include "chunkgen.h"
+#include "chunksplit.h"
 
 /**
  * Creates and initializes a World
@@ -153,3 +153,18 @@ void worldAfterFrame(World *world) {
 
 	listEmpty(world->chunksToUpdate);
 }
+
+void worldSetBlock(World *world, Vector3i pos, Block *block)
+{
+	Chunk *chunk = chunksplitSplit(world, pos);
+
+	if (*block == ' ') {
+		free(chunk->blocks);
+		chunk->blocks = NULL;
+	} else {
+		if (chunk->blocks == NULL)
+			chunk->blocks = knalloc(sizeof(Block*));
+		chunk->blocks[0] = block;
+	}
+}
+
