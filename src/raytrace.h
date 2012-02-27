@@ -1,5 +1,8 @@
 //! @file
 
+#ifndef _MMB_RAYTRACE_H
+#define _MMB_RAYTRACE_H
+
 #include "vector.h"
 #include "world.h"
 
@@ -17,4 +20,6 @@ typedef struct Ray {
 } Ray;
 
 extern void raytraceNext(Ray *ray);
+
+#endif /* _MMB_RAYTRACE_H */
 

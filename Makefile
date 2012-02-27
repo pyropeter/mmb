@@ -23,9 +23,9 @@ OBJS = $(SRCS:.c=.o)
 
 MAIN = mmb
 
-.PHONY: depend clean
+.PHONY: depend clean doc
 
-all:    $(MAIN) doc/graph/graph.png
+all:    $(MAIN) doc
 	@echo Done.
 
 $(MAIN): $(OBJS)
@@ -35,10 +35,14 @@ $(MAIN): $(OBJS)
 	$(CC) $(ALL_CFLAGS) -c $< -o $@
 
 clean:
-	$(RM) $(OBJS) $(MAIN) doc/graph/graph.dot doc/graph/graph.png
+	$(RM) $(OBJS) $(MAIN) doc/graph/graph.dot doc/graph/graph.png \
+		doc/doxygen/cookie
 
 depend: $(SRCS)
 	makedepend -w70 -Y $^
+
+doc: doc/graph/graph.png doc/doxygen/cookie
+	@echo Documentation generated.
 
 doc/graph/graph.dot: $(SRCS) $(HEADERS)
 	./doc/graph/create $(SRCS) $(HEADERS) > $@
@@ -46,16 +50,24 @@ doc/graph/graph.dot: $(SRCS) $(HEADERS)
 doc/graph/graph.png: doc/graph/graph.dot
 	dot -Tpng doc/graph/graph.dot > $@
 
+doc/doxygen/cookie: $(SRCS) $(HEADERS)
+	doxygen doc/doxygen/Doxyfile
+	touch $@
+
 # DO NOT DELETE THIS LINE -- make depend needs it
 
 src/chunksplit.o: src/defs.h src/chunksplit.h src/vector.h
-src/chunksplit.o: src/chunk.h src/block.h src/world.h
+src/chunksplit.o: src/world.h src/chunk.h src/block.h
 src/chunkgen.o: src/defs.h src/chunkgen.h src/vector.h src/world.h
 src/chunkgen.o: src/chunk.h src/block.h
 src/generator.o: src/defs.h src/vector.h src/generator.h src/block.h
+src/worldrender.o: src/defs.h src/vector.h src/worldrender.h
+src/worldrender.o: src/render.h src/world.h src/chunk.h src/block.h
+src/worldrender.o: src/raytrace.h
 src/defs.o: src/defs.h
 src/main.o: src/defs.h src/vector.h src/render.h src/generator.h
-src/main.o: src/block.h src/world.h src/chunk.h src/raytrace.h
+src/main.o: src/block.h src/world.h src/chunk.h src/worldrender.h
+src/main.o: src/raytrace.h
 src/world.o: src/defs.h src/vector.h src/world.h src/chunk.h
 src/world.o: src/block.h src/chunkgen.h src/chunksplit.h
 src/render.o: src/render.h src/defs.h src/vector.h

@@ -2,7 +2,6 @@
 #define _MMB_CHUNKSPLIT_H
 
 #include "vector.h"
-#include "chunk.h"
 #include "world.h"
 
 extern void chunksplitSplitOnce(World *world, Chunk *chunk,

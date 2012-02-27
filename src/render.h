@@ -21,8 +21,6 @@ typedef struct {
 	int mouseY;
 	float mouseSens;
 	Camera camera;
-	void (*onDraw)(void *data);
-	void *onDrawData;
 	void (*onMouse)(int button, int state, void *data);
 	void *onMouseData;
 	int vertices;
@@ -31,7 +29,6 @@ typedef struct {
 extern Render *renderInit(int argc, char *argv[]);
 extern void renderRun();
 extern void renderDebug();
-extern void renderHookDraw(void (*func)(void *data), void *data);
 extern void renderHookMouse(void (*func)(int button, int state, void *data),
 		void *data);
 

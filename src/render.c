@@ -11,7 +11,6 @@
 #include <string.h>
 #include <math.h>
 
-#include "GL/gl.h"
 #include "GL/freeglut.h"
 #if !defined(GLUT_WHEEL_UP)
 #  define GLUT_WHEEL_UP   3
@@ -104,16 +103,6 @@ void freePointer() {
 	glutMouseFunc(&renderOnMouse);
 }
 
-void onReshape(int w, int h) {
-	glViewport(0, 0, w, h);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluPerspective(45.0,			//The camera angle
-			(double)w / (double)h,	//The width-to-height ratio
-			1.0,			//The near z clipping coordinate
-			200.0);			//The far z clipping coordinate
-}
-
 void onKeyboard(unsigned char key, int x, int y) {
 	switch (key) {
 		case 'w':
@@ -168,66 +157,7 @@ void renderOnMouse(int button, int state, int x, int y) {
 
 void renderOnMouseHook(int button, int state, int x, int y) {
 	if (render.onMouse)
-		render.onMouse(button, state, render.onDrawData);
-}
-
-void onDisplay() {
-	//if (++frameno == 1000)
-	//	glutLeaveMainLoop();
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	double x = render.camera.x;
-	double y = render.camera.y;
-	double z = render.camera.z;
-
-	gluLookAt(x, y, z,
-			x + render.camera.dx,
-			y + render.camera.dy,
-			z + render.camera.dz,
-			0, 1, 0);
-
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_LIGHTING);
-
-	GLfloat ambientColor[] = {1, 1, 1, 1};
-	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambientColor);
-
-	GLfloat lightColor[] = {0.5, 0.5, 1, 1};
-	GLfloat lightPosition[] = {0, 1, 0, 0};
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, lightColor);
-	glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
-
-	GLfloat lightColor1[] = {1, 0, 0, 1};
-	GLfloat lightPosition1[] = {-1, 1, 0, 0};
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, lightColor1);
-	glLightfv(GL_LIGHT1, GL_POSITION, lightPosition1);
-
-	render.vertices = 0;
-	if (render.onDraw)
-		render.onDraw(render.onDrawData);
-
-	// draw pointer
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	glLoadIdentity();
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	glDisable(GL_LIGHTING);
-	glDisable(GL_DEPTH_TEST);
-	gluOrtho2D(0,1,0,1);
-	glBegin(GL_LINES); {
-		glVertex2f(0.5,0.45);
-		glVertex2f(0.5,0.55);
-		glVertex2f(0.45,0.5);
-		glVertex2f(0.55,0.5);
-	}; glEnd();
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-
-	glutSwapBuffers();
+		render.onMouse(button, state, render.onMouseData);
 }
 
 void onIdle() {
@@ -235,8 +165,8 @@ void onIdle() {
 }
 
 Render *renderInit(int argc, char *argv[]) {
-	render.onDraw = NULL;
-	render.onDrawData = NULL;
+	render.onMouse = NULL;
+	render.onMouseData = NULL;
 
 	render.mouseSens = 1.0/5000;
 
@@ -252,15 +182,8 @@ Render *renderInit(int argc, char *argv[]) {
 	glutInitWindowSize(640, 480);
 	render.window = glutCreateWindow("Mmb " VERSION);
 
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
-	glEnable(GL_LIGHT1);
-
-	glutReshapeFunc(&onReshape);
 	glutKeyboardFunc(&onKeyboard);
 	glutMouseFunc(&renderOnMouse);
-	glutDisplayFunc(&onDisplay);
 	glutIdleFunc(&onIdle);
 
 	return &render;
@@ -268,11 +191,6 @@ Render *renderInit(int argc, char *argv[]) {
 
 void renderRun() {
 	glutMainLoop();
-}
-
-void renderHookDraw(void (*func)(void *data), void *data) {
-	render.onDraw = func;
-	render.onDrawData = data;
 }
 
 void renderHookMouse(void (*func)(int button, int state, void *data),

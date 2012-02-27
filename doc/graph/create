@@ -18,10 +18,19 @@ BEGIN {
 	print "\"generator.c\";";
 	print "}";
 
-	print "subgraph cluster_opengl {";
-	print "label = \"OpenGL\";";
-	print "\"GL/gl.h\";";
-	print "\"GL/freeglut.h\";";
+	print "subgraph cluster_raytrace {";
+	print "label = \"Raytrace\";";
+	print "\"raytrace.h\";";
+	print "\"raytrace.c\";";
+	print "}";
+
+	print "subgraph cluster_render {";
+	print "label = \"Render / GUI\";";
+	print "\"render.h\";";
+	print "\"render.c\";";
+	print "\"worldrender.h\";";
+	print "\"worldrender.c\";";
+#	print "\"GL/freeglut.h\";";
 	print "}";
 
 	print "subgraph cluster_world {";
@@ -46,7 +55,7 @@ END {
 	including = FILENAME;
 	sub(/^.*src\//, "", including);
 
-	if (included !~ /vector.h|defs.c|defs.h/) {
+	if (included !~ /vector.h|defs.c|defs.h|GL/) {
 		print "\"" including "\" -> \"" included "\"";
 	}
 }
