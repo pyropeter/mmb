@@ -32,61 +32,59 @@ void blockDrawDist(Block *block, int x, int y, int z,
 	if (*block == ' ')
 		return;
 
-	glBegin(GL_QUADS); {
-		if (distX > 0) {
-			glNormal3f(-1,0,0);
-			glVertex3f(0+x,0+y,0+z);
-			glVertex3f(0+x,0+y,1+z);
-			glVertex3f(0+x,1+y,1+z);
-			glVertex3f(0+x,1+y,0+z);
-			vertices += 4;
-		}
+	if (distX > 0) {
+		glNormal3f(-1,0,0);
+		glVertex3f(0+x,0+y,0+z);
+		glVertex3f(0+x,0+y,1+z);
+		glVertex3f(0+x,1+y,1+z);
+		glVertex3f(0+x,1+y,0+z);
+		vertices += 4;
+	}
 
-		if (distY > 0) {
-			glNormal3f(0,-1,0);
-			glVertex3f(0+x,0+y,0+z);
-			glVertex3f(0+x,0+y,1+z);
-			glVertex3f(1+x,0+y,1+z);
-			glVertex3f(1+x,0+y,0+z);
-			vertices += 4;
-		}
+	if (distY > 0) {
+		glNormal3f(0,-1,0);
+		glVertex3f(0+x,0+y,0+z);
+		glVertex3f(0+x,0+y,1+z);
+		glVertex3f(1+x,0+y,1+z);
+		glVertex3f(1+x,0+y,0+z);
+		vertices += 4;
+	}
 
-		if (distZ > 0) {
-			glNormal3f(0,0,-1);
-			glVertex3f(0+x,0+y,0+z);
-			glVertex3f(0+x,1+y,0+z);
-			glVertex3f(1+x,1+y,0+z);
-			glVertex3f(1+x,0+y,0+z);
-			vertices += 4;
-		}
+	if (distZ > 0) {
+		glNormal3f(0,0,-1);
+		glVertex3f(0+x,0+y,0+z);
+		glVertex3f(0+x,1+y,0+z);
+		glVertex3f(1+x,1+y,0+z);
+		glVertex3f(1+x,0+y,0+z);
+		vertices += 4;
+	}
 
-		if (distX < 0) {
-			glNormal3f(1,0,0);
-			glVertex3f(1+x,0+y,0+z);
-			glVertex3f(1+x,0+y,1+z);
-			glVertex3f(1+x,1+y,1+z);
-			glVertex3f(1+x,1+y,0+z);
-			vertices += 4;
-		}
+	if (distX < 0) {
+		glNormal3f(1,0,0);
+		glVertex3f(1+x,0+y,0+z);
+		glVertex3f(1+x,0+y,1+z);
+		glVertex3f(1+x,1+y,1+z);
+		glVertex3f(1+x,1+y,0+z);
+		vertices += 4;
+	}
 
-		if (distY < 0) {
-			glNormal3f(0,1,0);
-			glVertex3f(0+x,1+y,0+z);
-			glVertex3f(0+x,1+y,1+z);
-			glVertex3f(1+x,1+y,1+z);
-			glVertex3f(1+x,1+y,0+z);
-			vertices += 4;
-		}
+	if (distY < 0) {
+		glNormal3f(0,1,0);
+		glVertex3f(0+x,1+y,0+z);
+		glVertex3f(0+x,1+y,1+z);
+		glVertex3f(1+x,1+y,1+z);
+		glVertex3f(1+x,1+y,0+z);
+		vertices += 4;
+	}
 
-		if (distZ < 0) {
-			glNormal3f(0,0,1);
-			glVertex3f(0+x,0+y,1+z);
-			glVertex3f(0+x,1+y,1+z);
-			glVertex3f(1+x,1+y,1+z);
-			glVertex3f(1+x,0+y,1+z);
-			vertices += 4;
-		}
-	}; glEnd();
+	if (distZ < 0) {
+		glNormal3f(0,0,1);
+		glVertex3f(0+x,0+y,1+z);
+		glVertex3f(0+x,1+y,1+z);
+		glVertex3f(1+x,1+y,1+z);
+		glVertex3f(1+x,0+y,1+z);
+		vertices += 4;
+	}
 }
 
 //! draw chunk's bounding rectangle as wireframe
@@ -280,7 +278,10 @@ void worldrenderDrawSzene(World *world, Camera *camera)
 
 	Chunk *startChunk = worldGetChunk(world, camera->pos);
 	startChunk->cookie = world->cookie;
+
+	glBegin(GL_QUADS);
 	findChunks(world, camera, startChunk);
+	glEnd();
 
 	glDisable(GL_LIGHTING);
 	hilightSelection(world, camera);
