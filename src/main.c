@@ -34,6 +34,7 @@ void onMouse(int button, int state, void *data)
 	} else if (state == GLUT_UP && button == GLUT_RIGHT_BUTTON) {
 		worldSetBlock(world, ray->last, "s");
 	}
+	worldrenderRefresh();
 }
 
 int main(int argc, char *argv[]) {

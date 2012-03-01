@@ -50,11 +50,13 @@ Chunk *searchAllChunks(World *world, Vector3i pos) {
 }
 
 /**
- * Returns the chunk at position pos
+ * Returns the chunk at position pos or NULL
  * 
- * If no chunk at that position exists, it is generated and returned.
+ * If no chunk at that position exists, it is _not_ generated.
+ * This function only returns chunks near the chunk that was last
+ * returned by worldGetChunkFast() or worldGetChunk().
  */
-Chunk *worldGetChunk(World *world, Vector3i pos) {
+Chunk *worldGetChunkFast(World *world, Vector3i pos) {
 	if (world->lastChunk) {
 		// check if position has changed at all
 		if (VEC3CMP(world->lastPos, ==, pos))
@@ -80,12 +82,26 @@ Chunk *worldGetChunk(World *world, Vector3i pos) {
 				}
 			}
 		}
-
-		// last resort
-		Chunk *res = searchAllChunks(world, pos);
-		if (res)
-			return res;
 	}
+
+	return NULL;
+}
+
+/**
+ * Returns the chunk at position pos
+ * 
+ * If no chunk at that position exists, it is generated and returned.
+ */
+Chunk *worldGetChunk(World *world, Vector3i pos) {
+	Chunk *res;
+
+	res = worldGetChunkFast(world, pos);
+	if (res)
+		return res;
+
+	res = searchAllChunks(world, pos);
+	if (res)
+		return res;
 
 	// create chunks at the requested position
 	Vector3i batchPos;

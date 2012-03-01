@@ -10,7 +10,22 @@
 static long timer = 0;
 static int vertices;
 
-Ray ray;
+static Ray ray;
+
+struct vertexData {
+	GLfloat x, y, z;
+	GLbyte nx, ny, nz;
+	char padding;
+};
+
+static int vboUpdate = 1;
+static struct vertexData *vertexMem;
+static struct vertexData *vertexMemNext;
+static unsigned int *indexMem;
+static int vboEntryCount;
+#define VBO_MAX_ENTRIES 1000000
+static int vertexVboId;
+static int indexVboId;
 
 /**
  * OpenGL default state
@@ -32,58 +47,67 @@ void blockDrawDist(Block *block, int x, int y, int z,
 	if (*block == ' ')
 		return;
 
+	if (vboEntryCount + 24 > VBO_MAX_ENTRIES)
+		return;
+
 	if (distX > 0) {
-		glNormal3f(-1,0,0);
-		glVertex3f(0+x,0+y,0+z);
-		glVertex3f(0+x,0+y,1+z);
-		glVertex3f(0+x,1+y,1+z);
-		glVertex3f(0+x,1+y,0+z);
+		//Normal3f(-1,0,0);
+		*(vertexMemNext++) = (struct vertexData){0+x,0+y,0+z,0,0,0};
+		*(vertexMemNext++) = (struct vertexData){0+x,0+y,1+z,-127,0,0};
+		*(vertexMemNext++) = (struct vertexData){0+x,1+y,1+z,-127,0,0};
+		*(vertexMemNext++) = (struct vertexData){0+x,1+y,0+z,-127,0,0};
 		vertices += 4;
+		vboEntryCount += 4;
 	}
 
 	if (distY > 0) {
-		glNormal3f(0,-1,0);
-		glVertex3f(0+x,0+y,0+z);
-		glVertex3f(0+x,0+y,1+z);
-		glVertex3f(1+x,0+y,1+z);
-		glVertex3f(1+x,0+y,0+z);
+		//Normal3f(0,-127,0);
+		*(vertexMemNext++) = (struct vertexData){0+x,0+y,0+z,0,0,0};
+		*(vertexMemNext++) = (struct vertexData){0+x,0+y,1+z,0,-127,0};
+		*(vertexMemNext++) = (struct vertexData){1+x,0+y,1+z,0,-127,0};
+		*(vertexMemNext++) = (struct vertexData){1+x,0+y,0+z,0,-127,0};
 		vertices += 4;
+		vboEntryCount += 4;
 	}
 
 	if (distZ > 0) {
-		glNormal3f(0,0,-1);
-		glVertex3f(0+x,0+y,0+z);
-		glVertex3f(0+x,1+y,0+z);
-		glVertex3f(1+x,1+y,0+z);
-		glVertex3f(1+x,0+y,0+z);
+		//Normal3f(0,0,-1);
+		*(vertexMemNext++) = (struct vertexData){0+x,0+y,0+z,0,0,0};
+		*(vertexMemNext++) = (struct vertexData){0+x,1+y,0+z,0,0,-127};
+		*(vertexMemNext++) = (struct vertexData){1+x,1+y,0+z,0,0,-127};
+		*(vertexMemNext++) = (struct vertexData){1+x,0+y,0+z,0,0,-127};
 		vertices += 4;
+		vboEntryCount += 4;
 	}
 
 	if (distX < 0) {
-		glNormal3f(1,0,0);
-		glVertex3f(1+x,0+y,0+z);
-		glVertex3f(1+x,0+y,1+z);
-		glVertex3f(1+x,1+y,1+z);
-		glVertex3f(1+x,1+y,0+z);
+		//Normal3f(1,0,0);
+		*(vertexMemNext++) = (struct vertexData){1+x,0+y,0+z,0,0,0};
+		*(vertexMemNext++) = (struct vertexData){1+x,0+y,1+z,127,0,0};
+		*(vertexMemNext++) = (struct vertexData){1+x,1+y,1+z,127,0,0};
+		*(vertexMemNext++) = (struct vertexData){1+x,1+y,0+z,127,0,0};
 		vertices += 4;
+		vboEntryCount += 4;
 	}
 
 	if (distY < 0) {
-		glNormal3f(0,1,0);
-		glVertex3f(0+x,1+y,0+z);
-		glVertex3f(0+x,1+y,1+z);
-		glVertex3f(1+x,1+y,1+z);
-		glVertex3f(1+x,1+y,0+z);
+		//Normal3f(0,1,0);
+		*(vertexMemNext++) = (struct vertexData){0+x,1+y,0+z,0,0,0};
+		*(vertexMemNext++) = (struct vertexData){0+x,1+y,1+z,0,127,0};
+		*(vertexMemNext++) = (struct vertexData){1+x,1+y,1+z,0,127,0};
+		*(vertexMemNext++) = (struct vertexData){1+x,1+y,0+z,0,127,0};
 		vertices += 4;
+		vboEntryCount += 4;
 	}
 
 	if (distZ < 0) {
-		glNormal3f(0,0,1);
-		glVertex3f(0+x,0+y,1+z);
-		glVertex3f(0+x,1+y,1+z);
-		glVertex3f(1+x,1+y,1+z);
-		glVertex3f(1+x,0+y,1+z);
+		//Normal3f(0,0,1);
+		*(vertexMemNext++) = (struct vertexData){0+x,0+y,1+z,0,0,0};
+		*(vertexMemNext++) = (struct vertexData){0+x,1+y,1+z,0,0,127};
+		*(vertexMemNext++) = (struct vertexData){1+x,1+y,1+z,0,0,127};
+		*(vertexMemNext++) = (struct vertexData){1+x,0+y,1+z,0,0,127};
 		vertices += 4;
+		vboEntryCount += 4;
 	}
 }
 
@@ -239,7 +263,8 @@ void hilightSelection(World *world, Camera *camera) {
 	ray.factor = 0;
 
 	int i;
-	for (i = 0; i < 20 && ray.chunk; i++) {
+	for (i = 0; i < 20 && ray.chunk &&
+			isVisible(camera, ray.chunk); i++) {
 		if (ray.chunk->blocks) {
 			// found a solid chunk
 			drawBlockBorder(ray.first);
@@ -276,12 +301,51 @@ void worldrenderDrawSzene(World *world, Camera *camera)
 	glLightfv(GL_LIGHT0, GL_POSITION, (GLfloat[]){0, 1, 0, 0});
 	glLightfv(GL_LIGHT1, GL_POSITION, (GLfloat[]){-1, 1, 0, 0});
 
-	Chunk *startChunk = worldGetChunk(world, camera->pos);
-	startChunk->cookie = world->cookie;
+//	Chunk *startChunk = worldGetChunk(world, camera->pos);
+//	startChunk->cookie = world->cookie;
 
-	glBegin(GL_QUADS);
-	findChunks(world, camera, startChunk);
-	glEnd();
+//	glBegin(GL_QUADS);
+//	findChunks(world, camera, startChunk);
+//	glEnd();
+
+	if (vboUpdate) {
+		vertices = 0;
+		// update vertexMem and indexMem
+		vertexMemNext = vertexMem;
+		vboEntryCount = 0;
+		Chunk *startChunk = worldGetChunk(world, camera->pos);
+		startChunk->cookie = world->cookie;
+		findChunks(world, camera, startChunk);
+
+		// update vbo
+//		glGenBuffers(1, &vertexVboId);
+//		glGenBuffers(1, &indexVboId);
+
+//		glBindBuffer(GL_ARRAY_BUFFER, vertexVboId);
+		glBufferData(GL_ARRAY_BUFFER, VBO_MAX_ENTRIES
+				* sizeof(struct vertexData), vertexMem,
+				GL_STATIC_DRAW);
+
+//		glBindBuffer(GL_ARRAY_BUFFER, indexVboId);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, VBO_MAX_ENTRIES
+				* sizeof(unsigned int), indexMem,
+				GL_STATIC_DRAW);
+
+		vboUpdate = 0;
+	}
+
+	// draw the scene
+//	glBindBuffer(GL_ARRAY_BUFFER, vertexVboId);
+//	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexVboId);
+//	glEnableClientState(GL_VERTEX_ARRAY);
+//	glEnableClientState(GL_NORMAL_ARRAY);
+	glVertexPointer(3, GL_FLOAT, sizeof(struct vertexData), 0);
+	glNormalPointer(GL_BYTE, sizeof(struct vertexData), 12);
+	glDrawElements(GL_QUADS, vboEntryCount, GL_UNSIGNED_INT, 0);
+//	glDisableClientState(GL_VERTEX_ARRAY);
+//	glDisableClientState(GL_NORMAL_ARRAY);
+//	glBindBuffer(GL_ARRAY_BUFFER, 0);
+//	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	glDisable(GL_LIGHTING);
 	hilightSelection(world, camera);
@@ -327,6 +391,21 @@ void worldrenderInit(World *world, Camera *camera)
 
 	glMatrixMode(GL_PROJECTION);
 
+	glGenBuffers(1, &vertexVboId);
+	glGenBuffers(1, &indexVboId);
+	glBindBuffer(GL_ARRAY_BUFFER, vertexVboId);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexVboId);
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_NORMAL_ARRAY);
+
+	vertexMem = knalloc(VBO_MAX_ENTRIES * sizeof(struct vertexData));
+	indexMem = knalloc(VBO_MAX_ENTRIES * sizeof(unsigned int));
+
+	int i;
+	for (i = 0; i < VBO_MAX_ENTRIES; i++) {
+		indexMem[i] = i;
+	}
+
 	timer = startTimer();
 }
 
@@ -342,7 +421,7 @@ void worldrenderReshape(World *world, Camera *camera, int w, int h)
 void worldrenderDraw(World *world, Camera *camera)
 {
 	long pre, scene, gui, draw, update;
-	vertices = 0;
+//	vertices = 0;
 	pre = stopTimer(timer);
 
 	worldrenderDrawSzene(world, camera);
@@ -369,5 +448,9 @@ void worldrenderDraw(World *world, Camera *camera)
 Ray *worldrenderGetRay(World *world, Camera *camera)
 {
 	return &ray;
+}
+
+void worldrenderRefresh() {
+	vboUpdate = 1;
 }
 
