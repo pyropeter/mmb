@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #include "GL/freeglut.h"
 
@@ -12,6 +13,8 @@ static int vertices;
 
 static Ray ray;
 
+#define FRAMETIME (1000000/30)
+
 struct vertexData {
 	GLfloat x, y, z;
 	GLbyte nx, ny, nz;
@@ -23,7 +26,7 @@ static struct vertexData *vertexMem;
 static struct vertexData *vertexMemNext;
 static unsigned int *indexMem;
 static int vboEntryCount;
-#define VBO_MAX_ENTRIES 1000000
+#define VBO_MAX_ENTRIES 10000000
 static int vertexVboId;
 static int indexVboId;
 
@@ -420,7 +423,7 @@ void worldrenderReshape(World *world, Camera *camera, int w, int h)
 
 void worldrenderDraw(World *world, Camera *camera)
 {
-	long pre, scene, gui, draw, update;
+	long pre, scene, gui, draw, update, sleep;
 //	vertices = 0;
 	pre = stopTimer(timer);
 
@@ -430,15 +433,24 @@ void worldrenderDraw(World *world, Camera *camera)
 	worldrenderDrawGui(world, camera);
 	gui = stopTimer(timer);
 
-	glutSwapBuffers();
+//	glutSwapBuffers();
+	glFlush();
 	draw = stopTimer(timer);
 
 	worldAfterFrame(world);
 	update = stopTimer(timer);
 
+	// hold constant framerate
+	long timeleft = FRAMETIME - update;
+	if (timeleft > 0) {
+		usleep(timeleft);
+	}
+	glutSwapBuffers();
+	sleep = stopTimer(timer);
+
 	// print statistics
-	printf("frame: %i %li %li %li %li %li\n", vertices,
-			pre, scene, gui, draw, update);
+	printf("frame: %i %5li %5li %5li %5li %5li %5li\n", vertices,
+			pre, scene, gui, draw, update, sleep);
 	fflush(stdout);
 
 	// start timer for next frame
