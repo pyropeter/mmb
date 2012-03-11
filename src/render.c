@@ -66,6 +66,7 @@ void renderDebug() {
 			render.camera.pos.y,
 			render.camera.pos.z);
 	printf("Vertices drawn: %i\n", render.vertices);
+	printf("Camera range: %i\n", render.camera.range);
 	printf("===== END =====\n");
 }
 
@@ -170,7 +171,7 @@ Render *renderInit(int argc, char *argv[]) {
 
 	render.mouseSens = 1.0/5000;
 
-	render.camera.range = 10;
+	render.camera.range = 75;
 	moveCamera(0, 2, 0);
 	rotateCamera(2.5, 1.0);
 

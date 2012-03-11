@@ -13,7 +13,7 @@ static int vertices;
 
 static Ray ray;
 
-#define FRAMETIME (1000000/30)
+#define FRAMETIME (1000000/600 * 11)
 
 struct vertexData {
 	GLfloat x, y, z;
@@ -311,7 +311,7 @@ void worldrenderDrawSzene(World *world, Camera *camera)
 //	findChunks(world, camera, startChunk);
 //	glEnd();
 
-	if (vboUpdate) {
+	if (vboUpdate || world->chunksUpdated > 0) {
 		vertices = 0;
 		// update vertexMem and indexMem
 		vertexMemNext = vertexMem;
@@ -434,7 +434,7 @@ void worldrenderDraw(World *world, Camera *camera)
 	gui = stopTimer(timer);
 
 //	glutSwapBuffers();
-	glFlush();
+	glFinish();
 	draw = stopTimer(timer);
 
 	worldAfterFrame(world);
@@ -448,13 +448,13 @@ void worldrenderDraw(World *world, Camera *camera)
 	glutSwapBuffers();
 	sleep = stopTimer(timer);
 
+	// start timer for next frame
+	timer = startTimer();
+
 	// print statistics
 	printf("frame: %i %5li %5li %5li %5li %5li %5li\n", vertices,
 			pre, scene, gui, draw, update, sleep);
 	fflush(stdout);
-
-	// start timer for next frame
-	timer = startTimer();
 }
 
 Ray *worldrenderGetRay(World *world, Camera *camera)

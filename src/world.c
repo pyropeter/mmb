@@ -24,8 +24,9 @@ World *worldInit(Block *(*gen)(Vector3i)) {
 	world->generator = gen;
 
 	world->lastChunk = NULL;
+	world->chunksUpdated = 0;
 
-	world->maxChunksToUpdate = 50;
+	world->maxChunksToUpdate = 200;
 	world->chunksToUpdate = listNew();
 
 	// chunkgen
@@ -133,7 +134,7 @@ void worldUpdateChunk(World *world, Chunk *chunk) {
 void worldAfterFrame(World *world) {
 	Chunk** chunk;
 	Vector3i pos;
-	int count = world->maxChunksToUpdate;
+	world->chunksUpdated = 0;
 
 	LISTITER(world->chunksToUpdate, chunk, Chunk**) {
 #ifdef MMB_DEBUG_CHUNK
@@ -163,7 +164,8 @@ void worldAfterFrame(World *world) {
 		pos = VEC3IOP(pos, *, world->groupSize);
 		chunkgenCreate(world, pos);
 
-		if (--count == 0)
+		world->chunksUpdated++;
+		if (world->chunksUpdated == world->maxChunksToUpdate)
 			break;
 	}
 

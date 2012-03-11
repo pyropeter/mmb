@@ -20,6 +20,8 @@ typedef struct World {
 
 	Chunk *lastChunk;
 	Vector3i lastPos;
+
+	int chunksUpdated;
 	
 	// chunkUpdate
 	int maxChunksToUpdate;
