@@ -9,7 +9,7 @@ VERSION := $(shell git describe --tags --long --dirty 2>/dev/null \
 CC = gcc
 CFLAGS = -Wall -g -pg
 ALL_CFLAGS = -DVERSION='"$(VERSION)"' $(CFLAGS)
-LIBS = -lGL -lGLU -lglut -lm -lrt
+LIBS = -lGL -lGLU -lGLEW -lglut -lm -lrt
 
 # for stable releases
 # * disable symbols?

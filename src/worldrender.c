@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include <GL/glew.h>
 #include "GL/freeglut.h"
 
 #include "defs.h"
@@ -377,6 +378,13 @@ void worldrenderDrawGui(World *world, Camera *camera)
 
 void worldrenderInit(World *world, Camera *camera)
 {
+	GLenum err = glewInit();
+	if (GLEW_OK != err) {
+		fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
+		exit(EXIT_FAILURE);
+	}
+	printf("glew: %s\n", glewGetString(GLEW_VERSION));
+
 	// create ambient light
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, (GLfloat[]){1, 1, 1, 1});
 
