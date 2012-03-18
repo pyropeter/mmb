@@ -171,9 +171,9 @@ Render *renderInit(int argc, char *argv[]) {
 
 	render.mouseSens = 1.0/5000;
 
-	render.camera.range = 100;
-	moveCamera(0, 2, 0);
-	rotateCamera(2.5, 1.0);
+	render.camera.range = 60;
+	moveCamera(0.5, 2.5, -0.5);
+	rotateCamera(1.8, -0.7);
 
 
 	glutInit(&argc, argv);

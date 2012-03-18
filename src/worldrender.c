@@ -52,43 +52,57 @@ static GLuint terrainId;
  *
  * */
 
+Vector4f convertTexCoords(Vector2i coord)
+{
+	return (Vector4f){0.0625 * coord.x, 0.0625 * coord.y,
+			0.0625 * (coord.x + 1), 0.0625 * (coord.y + 1)};
+}
+
 void blockDrawFace(Block *block, int x, int y, int z, int dir) {
-	if (*block == ' ')
+	if (block->solid == 0)
 		return;
 
 	if (vboEntryCount + 24 > VBO_MAX_ENTRIES)
 		return;
 
+	Vector4f t;
+
 	if (dir == DIR_XS) {
-		*(vertexMemNext++) = (struct vertexData){0+x,0+y,0+z,0.0625*3,0.0625*1,0,0,0};
-		*(vertexMemNext++) = (struct vertexData){0+x,0+y,1+z,0.0625*4,0.0625*1,-127,0,0};
-		*(vertexMemNext++) = (struct vertexData){0+x,1+y,1+z,0.0625*4,0.0625*0,-127,0,0};
-		*(vertexMemNext++) = (struct vertexData){0+x,1+y,0+z,0.0625*3,0.0625*0,-127,0,0};
+		t = convertTexCoords(block->texXS);
+		*(vertexMemNext++) = (struct vertexData){0+x,0+y,0+z,t.x,t.w,-127,0,0};
+		*(vertexMemNext++) = (struct vertexData){0+x,0+y,1+z,t.z,t.w,-127,0,0};
+		*(vertexMemNext++) = (struct vertexData){0+x,1+y,1+z,t.z,t.y,-127,0,0};
+		*(vertexMemNext++) = (struct vertexData){0+x,1+y,0+z,t.x,t.y,-127,0,0};
 	} else if (dir == DIR_YS) {
-		*(vertexMemNext++) = (struct vertexData){0+x,0+y,0+z,0.0625*2,0.0625*0,0,0,0};
-		*(vertexMemNext++) = (struct vertexData){1+x,0+y,0+z,0.0625*3,0.0625*0,0,-127,0};
-		*(vertexMemNext++) = (struct vertexData){1+x,0+y,1+z,0.0625*3,0.0625*1,0,-127,0};
-		*(vertexMemNext++) = (struct vertexData){0+x,0+y,1+z,0.0625*2,0.0625*1,0,-127,0};
+		t = convertTexCoords(block->texYS);
+		*(vertexMemNext++) = (struct vertexData){0+x,0+y,0+z,t.x,t.y,0,-127,0};
+		*(vertexMemNext++) = (struct vertexData){1+x,0+y,0+z,t.z,t.y,0,-127,0};
+		*(vertexMemNext++) = (struct vertexData){1+x,0+y,1+z,t.z,t.w,0,-127,0};
+		*(vertexMemNext++) = (struct vertexData){0+x,0+y,1+z,t.x,t.w,0,-127,0};
 	} else if (dir == DIR_ZS) {
-		*(vertexMemNext++) = (struct vertexData){0+x,0+y,0+z,0.0625*3,0.0625*1,0,0,0};
-		*(vertexMemNext++) = (struct vertexData){0+x,1+y,0+z,0.0625*3,0.0625*0,0,0,-127};
-		*(vertexMemNext++) = (struct vertexData){1+x,1+y,0+z,0.0625*4,0.0625*0,0,0,-127};
-		*(vertexMemNext++) = (struct vertexData){1+x,0+y,0+z,0.0625*4,0.0625*1,0,0,-127};
+		t = convertTexCoords(block->texZS);
+		*(vertexMemNext++) = (struct vertexData){0+x,0+y,0+z,t.x,t.w,0,0,-127};
+		*(vertexMemNext++) = (struct vertexData){0+x,1+y,0+z,t.x,t.y,0,0,-127};
+		*(vertexMemNext++) = (struct vertexData){1+x,1+y,0+z,t.z,t.y,0,0,-127};
+		*(vertexMemNext++) = (struct vertexData){1+x,0+y,0+z,t.z,t.w,0,0,-127};
 	} else if (dir == DIR_XG) {
-		*(vertexMemNext++) = (struct vertexData){1+x,0+y,0+z,0.0625*3,0.0625*1,0,0,0};
-		*(vertexMemNext++) = (struct vertexData){1+x,1+y,0+z,0.0625*3,0.0625*0,127,0,0};
-		*(vertexMemNext++) = (struct vertexData){1+x,1+y,1+z,0.0625*4,0.0625*0,127,0,0};
-		*(vertexMemNext++) = (struct vertexData){1+x,0+y,1+z,0.0625*4,0.0625*1,127,0,0};
+		t = convertTexCoords(block->texXG);
+		*(vertexMemNext++) = (struct vertexData){1+x,0+y,0+z,t.x,t.w,127,0,0};
+		*(vertexMemNext++) = (struct vertexData){1+x,1+y,0+z,t.x,t.y,127,0,0};
+		*(vertexMemNext++) = (struct vertexData){1+x,1+y,1+z,t.z,t.y,127,0,0};
+		*(vertexMemNext++) = (struct vertexData){1+x,0+y,1+z,t.z,t.w,127,0,0};
 	} else if (dir == DIR_YG) {
-		*(vertexMemNext++) = (struct vertexData){0+x,1+y,0+z,0.0625*0,0.0625*0,0,0,0};
-		*(vertexMemNext++) = (struct vertexData){0+x,1+y,1+z,0.0625*1,0.0625*0,0,127,0};
-		*(vertexMemNext++) = (struct vertexData){1+x,1+y,1+z,0.0625*1,0.0625*1,0,127,0};
-		*(vertexMemNext++) = (struct vertexData){1+x,1+y,0+z,0.0625*0,0.0625*1,0,127,0};
+		t = convertTexCoords(block->texYG);
+		*(vertexMemNext++) = (struct vertexData){0+x,1+y,0+z,t.x,t.y,0,127,0};
+		*(vertexMemNext++) = (struct vertexData){0+x,1+y,1+z,t.z,t.y,0,127,0};
+		*(vertexMemNext++) = (struct vertexData){1+x,1+y,1+z,t.z,t.w,0,127,0};
+		*(vertexMemNext++) = (struct vertexData){1+x,1+y,0+z,t.x,t.w,0,127,0};
 	} else if (dir == DIR_ZG) {
-		*(vertexMemNext++) = (struct vertexData){0+x,0+y,1+z,0.0625*3,0.0625*1,0,0,0};
-		*(vertexMemNext++) = (struct vertexData){1+x,0+y,1+z,0.0625*4,0.0625*1,0,0,127};
-		*(vertexMemNext++) = (struct vertexData){1+x,1+y,1+z,0.0625*4,0.0625*0,0,0,127};
-		*(vertexMemNext++) = (struct vertexData){0+x,1+y,1+z,0.0625*3,0.0625*0,0,0,127};
+		t = convertTexCoords(block->texZG);
+		*(vertexMemNext++) = (struct vertexData){0+x,0+y,1+z,t.x,t.w,0,0,127};
+		*(vertexMemNext++) = (struct vertexData){1+x,0+y,1+z,t.z,t.w,0,0,127};
+		*(vertexMemNext++) = (struct vertexData){1+x,1+y,1+z,t.z,t.y,0,0,127};
+		*(vertexMemNext++) = (struct vertexData){0+x,1+y,1+z,t.x,t.y,0,0,127};
 	}
 
 	vertices += 4;

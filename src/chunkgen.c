@@ -93,7 +93,7 @@ void handleChunk(World *world, AnnotatedBlock *blocks,
 
 	// transparent or not?
 	// allocate memory for block pointers
-	if (*(first->block) != ' ') {
+	if (first->block->solid) {
 		int chunkSizeX = first->high2.x - first->low2.x + 1;
 		int chunkSizeY = first->high2.y - first->low2.y + 1;
 		chunk->blocks = knalloc(sizeof(Block*) * 
@@ -221,7 +221,7 @@ void setDistances(AnnotatedBlock *blocks, Vector3i size) {
 	for (z = size.z - 1; z >= 0; z--) {
 		if (x < size.x - 1) {
 			// compare with next block in XG-dir.
-			if (*(tmp->block) == *(tmpX->block)) {
+			if (tmp->block->solid == tmpX->block->solid) {
 				tmp->high.x = tmpX->high.x;
 			} else {
 				tmp->high.x = x;
@@ -229,7 +229,7 @@ void setDistances(AnnotatedBlock *blocks, Vector3i size) {
 		}
 		if (y < size.y - 1) {
 			// compare with next block in YG-dir.
-			if (*(tmp->block) == *(tmpY->block)) {
+			if (tmp->block->solid == tmpY->block->solid) {
 				tmp->high.y = tmpY->high.y;
 			} else {
 				tmp->high.y = y;
@@ -250,7 +250,7 @@ void setDistances(AnnotatedBlock *blocks, Vector3i size) {
 	for (z = 0; z < size.z; z++) {
 		if (x > 0) {
 			// compare with next block in XS-dir.
-			if (*(tmp->block) == *(tmpX->block)) {
+			if (tmp->block->solid == tmpX->block->solid) {
 				tmp->low.x = tmpX->low.x;
 			} else {
 				tmp->low.x = x;
@@ -258,7 +258,7 @@ void setDistances(AnnotatedBlock *blocks, Vector3i size) {
 		}
 		if (y > 0) {
 			// compare with neyt block in YS-dir.
-			if (*(tmp->block) == *(tmpY->block)) {
+			if (tmp->block->solid == tmpY->block->solid) {
 				tmp->low.y = tmpY->low.y;
 			} else {
 				tmp->low.y = y;
@@ -334,7 +334,7 @@ void setDistances(AnnotatedBlock *blocks, Vector3i size) {
 void chunkgenCreate(World *world, Vector3i low) {
 	Vector3i size = world->groupSize;
 	Vector3i high = VEC3IOP(low, +, size);
-	int blockcount = size.x * size.y * size.z;
+//	int blockcount = size.x * size.y * size.z;
 	int x,y,z;
 	AnnotatedBlock *blocks = world->annotatedBlocks;
 	AnnotatedBlock *tmp;

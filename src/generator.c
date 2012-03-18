@@ -10,8 +10,6 @@
 #include "vector.h"
 #include "generator.h"
 
-static char *blocks = " s";
-
 #define TABLELEN 64L
 static long long int sinTable[TABLELEN];
 static long long int cosTable[TABLELEN];
@@ -33,8 +31,12 @@ Block *generatorGetBlock(Vector3i pos) {
 				divRoundDown(pos.z * TABLELEN, 30), TABLELEN)])
 			/ 1500000000);
 
-	if (height <= pos.y)
-		return blocks;
+	if (height < pos.y)
+		return blockGet(BLOCKTYPE_AIR);
+	else if (height == pos.y)
+		return blockGet(BLOCKTYPE_GRASS);
+	else if (height < pos.y + 2)
+		return blockGet(BLOCKTYPE_DIRT);
 	else
-		return blocks + 1;
+		return blockGet(BLOCKTYPE_STONE);
 }

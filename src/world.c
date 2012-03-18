@@ -187,7 +187,7 @@ void worldSetBlock(World *world, Vector3i pos, Block *block)
 {
 	Chunk *chunk = chunksplitSplit(world, pos);
 
-	if (*block == ' ') {
+	if (block->solid == 0) {
 		free(chunk->blocks);
 		chunk->blocks = NULL;
 	} else {
