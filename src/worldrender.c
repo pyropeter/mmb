@@ -455,9 +455,11 @@ void worldrenderDraw(World *world, Camera *camera)
 	pre = stopTimer(timer);
 
 	worldrenderDrawSzene(world, camera);
+	glFinish();
 	scene = stopTimer(timer);
 
 	worldrenderDrawGui(world, camera);
+	glFinish();
 	gui = stopTimer(timer);
 
 //	glutSwapBuffers();
@@ -465,12 +467,13 @@ void worldrenderDraw(World *world, Camera *camera)
 	draw = stopTimer(timer);
 
 	worldAfterFrame(world);
+	glFinish();
 	update = stopTimer(timer);
 
 	// hold constant framerate
 	long timeleft = FRAMETIME - update;
 	if (timeleft > 0) {
-		usleep(timeleft);
+//		usleep(timeleft);
 	}
 	glutSwapBuffers();
 	glFinish();
