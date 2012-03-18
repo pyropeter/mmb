@@ -2,13 +2,14 @@ SHELL = /bin/sh
 .SUFFIXES:
 .SUFFIXES: .c .o
 
+CODENAME = "White, Removable Cubes"
 DVERSION = v0.2
 VERSION := $(shell git describe --tags --long --dirty 2>/dev/null \
 		|| echo "$(DVERSION)")
 
 CC = gcc
 CFLAGS = -Wall -g -pg
-ALL_CFLAGS = -DVERSION='"$(VERSION)"' $(CFLAGS)
+ALL_CFLAGS = -DVERSION='"$(VERSION)"' -DCODENAME='$(CODENAME)' $(CFLAGS)
 LIBS = -lGL -lGLU -lGLEW -lglut -lm -lrt
 
 # for stable releases
