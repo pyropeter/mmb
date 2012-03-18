@@ -70,9 +70,20 @@ Chunk *worldGetChunkFast(World *world, Vector3i pos) {
 			return world->lastChunk;
 		}
 
+		// check chunks adjacent to the last chunk
+		Chunk **adjacent;
+		LISTITER(world->lastChunk->adjacent, adjacent, Chunk**) {
+			if (VEC3CMP((*adjacent)->low, <=, pos)
+			 && VEC3CMP((*adjacent)->high, >=, pos)) {
+				world->lastChunk = *adjacent;
+				world->lastPos = pos;
+				return *adjacent;
+			}
+		}
+
 		// check chunks adjacent to the chunks adjacent to the
 		// last chunk
-		Chunk **middle, **adjacent;
+		Chunk **middle;
 		LISTITER(world->lastChunk->adjacent, middle, Chunk**) {
 			LISTITER((*middle)->adjacent, adjacent, Chunk**) {
 				if (VEC3CMP((*adjacent)->low, <=, pos)
