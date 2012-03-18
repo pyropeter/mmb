@@ -25,7 +25,7 @@ MAIN = mmb
 
 .PHONY: depend clean doc
 
-all:    $(MAIN) doc
+all:    $(MAIN)
 	@echo Done.
 
 $(MAIN): $(OBJS)
