@@ -10,7 +10,7 @@ VERSION := $(shell git describe --tags --long --dirty 2>/dev/null \
 CC = gcc
 CFLAGS = -Wall -g -pg
 ALL_CFLAGS = -DVERSION='"$(VERSION)"' -DCODENAME='$(CODENAME)' $(CFLAGS)
-LIBS = -lGL -lGLU -lGLEW -lglut -lm -lrt
+LIBS = -lGL -lGLU -lGLEW -lglut -lSOIL -lm -lrt
 
 # for stable releases
 # * disable symbols?
@@ -26,7 +26,7 @@ MAIN = mmb
 
 .PHONY: depend clean doc
 
-all:    $(MAIN)
+all:    $(MAIN) gmcraft_terrain.png
 	@echo Done.
 
 $(MAIN): $(OBJS)
@@ -54,6 +54,9 @@ doc/graph/graph.png: doc/graph/graph.dot
 doc/doxygen/cookie: $(SRCS) $(HEADERS)
 	doxygen doc/doxygen/Doxyfile
 	touch $@
+
+gmcraft_terrain.png:
+	wget http://eddie.pyropeter.eu/tmp/gmcraft_terrain.png
 
 # DO NOT DELETE THIS LINE -- make depend needs it
 

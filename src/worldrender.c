@@ -5,6 +5,7 @@
 
 #include <GL/glew.h>
 #include "GL/freeglut.h"
+#include "SOIL.h"
 
 #include "defs.h"
 #include "vector.h"
@@ -20,9 +21,9 @@ static Ray ray;
 #define FRAMETIME (1000000/600 * 15)
 
 struct vertexData {
-	GLfloat x, y, z;
-	GLbyte nx, ny, nz;
-	char padding;
+	GLfloat x, y, z;   // 12
+	GLfloat s, t;      // 20
+	GLbyte nx, ny, nz; // 23
 };
 
 static int vboUpdate = 1;
@@ -33,6 +34,8 @@ static int vboEntryCount;
 #define VBO_MAX_ENTRIES 2000000
 static GLuint vertexVboId;
 static GLuint indexVboId;
+
+static GLuint terrainId;
 
 /**
  * OpenGL default state
@@ -57,35 +60,35 @@ void blockDrawFace(Block *block, int x, int y, int z, int dir) {
 		return;
 
 	if (dir == DIR_XS) {
-		*(vertexMemNext++) = (struct vertexData){0+x,0+y,0+z,0,0,0};
-		*(vertexMemNext++) = (struct vertexData){0+x,0+y,1+z,-127,0,0};
-		*(vertexMemNext++) = (struct vertexData){0+x,1+y,1+z,-127,0,0};
-		*(vertexMemNext++) = (struct vertexData){0+x,1+y,0+z,-127,0,0};
+		*(vertexMemNext++) = (struct vertexData){0+x,0+y,0+z,0.0625*3,0.0625*1,0,0,0};
+		*(vertexMemNext++) = (struct vertexData){0+x,0+y,1+z,0.0625*4,0.0625*1,-127,0,0};
+		*(vertexMemNext++) = (struct vertexData){0+x,1+y,1+z,0.0625*4,0.0625*0,-127,0,0};
+		*(vertexMemNext++) = (struct vertexData){0+x,1+y,0+z,0.0625*3,0.0625*0,-127,0,0};
 	} else if (dir == DIR_YS) {
-		*(vertexMemNext++) = (struct vertexData){0+x,0+y,0+z,0,0,0};
-		*(vertexMemNext++) = (struct vertexData){1+x,0+y,0+z,0,-127,0};
-		*(vertexMemNext++) = (struct vertexData){1+x,0+y,1+z,0,-127,0};
-		*(vertexMemNext++) = (struct vertexData){0+x,0+y,1+z,0,-127,0};
+		*(vertexMemNext++) = (struct vertexData){0+x,0+y,0+z,0.0625*2,0.0625*0,0,0,0};
+		*(vertexMemNext++) = (struct vertexData){1+x,0+y,0+z,0.0625*3,0.0625*0,0,-127,0};
+		*(vertexMemNext++) = (struct vertexData){1+x,0+y,1+z,0.0625*3,0.0625*1,0,-127,0};
+		*(vertexMemNext++) = (struct vertexData){0+x,0+y,1+z,0.0625*2,0.0625*1,0,-127,0};
 	} else if (dir == DIR_ZS) {
-		*(vertexMemNext++) = (struct vertexData){0+x,0+y,0+z,0,0,0};
-		*(vertexMemNext++) = (struct vertexData){0+x,1+y,0+z,0,0,-127};
-		*(vertexMemNext++) = (struct vertexData){1+x,1+y,0+z,0,0,-127};
-		*(vertexMemNext++) = (struct vertexData){1+x,0+y,0+z,0,0,-127};
+		*(vertexMemNext++) = (struct vertexData){0+x,0+y,0+z,0.0625*3,0.0625*1,0,0,0};
+		*(vertexMemNext++) = (struct vertexData){0+x,1+y,0+z,0.0625*3,0.0625*0,0,0,-127};
+		*(vertexMemNext++) = (struct vertexData){1+x,1+y,0+z,0.0625*4,0.0625*0,0,0,-127};
+		*(vertexMemNext++) = (struct vertexData){1+x,0+y,0+z,0.0625*4,0.0625*1,0,0,-127};
 	} else if (dir == DIR_XG) {
-		*(vertexMemNext++) = (struct vertexData){1+x,0+y,0+z,0,0,0};
-		*(vertexMemNext++) = (struct vertexData){1+x,1+y,0+z,127,0,0};
-		*(vertexMemNext++) = (struct vertexData){1+x,1+y,1+z,127,0,0};
-		*(vertexMemNext++) = (struct vertexData){1+x,0+y,1+z,127,0,0};
+		*(vertexMemNext++) = (struct vertexData){1+x,0+y,0+z,0.0625*3,0.0625*1,0,0,0};
+		*(vertexMemNext++) = (struct vertexData){1+x,1+y,0+z,0.0625*3,0.0625*0,127,0,0};
+		*(vertexMemNext++) = (struct vertexData){1+x,1+y,1+z,0.0625*4,0.0625*0,127,0,0};
+		*(vertexMemNext++) = (struct vertexData){1+x,0+y,1+z,0.0625*4,0.0625*1,127,0,0};
 	} else if (dir == DIR_YG) {
-		*(vertexMemNext++) = (struct vertexData){0+x,1+y,0+z,0,0,0};
-		*(vertexMemNext++) = (struct vertexData){0+x,1+y,1+z,0,127,0};
-		*(vertexMemNext++) = (struct vertexData){1+x,1+y,1+z,0,127,0};
-		*(vertexMemNext++) = (struct vertexData){1+x,1+y,0+z,0,127,0};
+		*(vertexMemNext++) = (struct vertexData){0+x,1+y,0+z,0.0625*0,0.0625*0,0,0,0};
+		*(vertexMemNext++) = (struct vertexData){0+x,1+y,1+z,0.0625*1,0.0625*0,0,127,0};
+		*(vertexMemNext++) = (struct vertexData){1+x,1+y,1+z,0.0625*1,0.0625*1,0,127,0};
+		*(vertexMemNext++) = (struct vertexData){1+x,1+y,0+z,0.0625*0,0.0625*1,0,127,0};
 	} else if (dir == DIR_ZG) {
-		*(vertexMemNext++) = (struct vertexData){0+x,0+y,1+z,0,0,0};
-		*(vertexMemNext++) = (struct vertexData){1+x,0+y,1+z,0,0,127};
-		*(vertexMemNext++) = (struct vertexData){1+x,1+y,1+z,0,0,127};
-		*(vertexMemNext++) = (struct vertexData){0+x,1+y,1+z,0,0,127};
+		*(vertexMemNext++) = (struct vertexData){0+x,0+y,1+z,0.0625*3,0.0625*1,0,0,0};
+		*(vertexMemNext++) = (struct vertexData){1+x,0+y,1+z,0.0625*4,0.0625*1,0,0,127};
+		*(vertexMemNext++) = (struct vertexData){1+x,1+y,1+z,0.0625*4,0.0625*0,0,0,127};
+		*(vertexMemNext++) = (struct vertexData){0+x,1+y,1+z,0.0625*3,0.0625*0,0,0,127};
 	}
 
 	vertices += 4;
@@ -294,9 +297,11 @@ void worldrenderDrawSzene(World *world, Camera *camera)
 	world->cookie++;
 
 	// reenable lighting:
-	glEnable(GL_LIGHTING);
+//	glEnable(GL_LIGHTING);
 	glLightfv(GL_LIGHT0, GL_POSITION, (GLfloat[]){0, 1, 0, 0});
 	glLightfv(GL_LIGHT1, GL_POSITION, (GLfloat[]){-1, 1, 0, 0});
+
+	glEnable(GL_TEXTURE_2D);
 
 //	Chunk *startChunk = worldGetChunk(world, camera->pos);
 //	startChunk->cookie = world->cookie;
@@ -350,7 +355,8 @@ void worldrenderDrawSzene(World *world, Camera *camera)
 //	glBindBuffer(GL_ARRAY_BUFFER, 0);
 //	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-	glDisable(GL_LIGHTING);
+	glDisable(GL_TEXTURE_2D);
+//	glDisable(GL_LIGHTING);
 	hilightSelection(world, camera);
 
 //	debugSomeStuff(world, camera);
@@ -391,6 +397,19 @@ void worldrenderInit(World *world, Camera *camera)
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 
+	terrainId = SOIL_load_OGL_texture("gmcraft_terrain.png", SOIL_LOAD_AUTO,
+			SOIL_CREATE_NEW_ID, 0);
+	if (terrainId == 0) {
+		fprintf(stderr, "SOIL Error.\n");
+		exit(EXIT_FAILURE);
+	}
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, terrainId);
+	glShadeModel(GL_FLAT);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
 	// create ambient light
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, (GLfloat[]){1, 1, 1, 1});
 
@@ -413,6 +432,7 @@ void worldrenderInit(World *world, Camera *camera)
 	glBindBuffer(GL_ARRAY_BUFFER, vertexVboId);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexVboId);
 	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_NORMAL_ARRAY);
 
 //	vertexMem = knalloc(VBO_MAX_ENTRIES * sizeof(struct vertexData));
@@ -434,7 +454,8 @@ void worldrenderInit(World *world, Camera *camera)
 //			GL_DYNAMIC_DRAW);
 
 	glVertexPointer(3, GL_FLOAT, sizeof(struct vertexData), (GLvoid*) 0);
-	glNormalPointer(GL_BYTE, sizeof(struct vertexData), (GLvoid*) 12);
+	glTexCoordPointer(2, GL_FLOAT, sizeof(struct vertexData), (GLvoid*) 12);
+	glNormalPointer(GL_BYTE, sizeof(struct vertexData), (GLvoid*) 20);
 
 	timer = startTimer();
 }
