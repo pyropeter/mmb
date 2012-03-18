@@ -26,7 +26,7 @@ World *worldInit(Block *(*gen)(Vector3i)) {
 	world->lastChunk = NULL;
 	world->chunksUpdated = 0;
 
-	world->maxChunksToUpdate = 200;
+	world->maxChunksToUpdate = 500;
 	world->chunksToUpdate = listNew();
 
 	// chunkgen
