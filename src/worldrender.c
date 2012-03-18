@@ -311,9 +311,8 @@ void worldrenderDrawSzene(World *world, Camera *camera)
 	world->cookie++;
 
 	// reenable lighting:
-//	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHTING);
 	glLightfv(GL_LIGHT0, GL_POSITION, (GLfloat[]){0, 1, 0, 0});
-	glLightfv(GL_LIGHT1, GL_POSITION, (GLfloat[]){-1, 1, 0, 0});
 
 	glEnable(GL_TEXTURE_2D);
 
@@ -370,7 +369,7 @@ void worldrenderDrawSzene(World *world, Camera *camera)
 //	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	glDisable(GL_TEXTURE_2D);
-//	glDisable(GL_LIGHTING);
+	glDisable(GL_LIGHTING);
 	hilightSelection(world, camera);
 
 //	debugSomeStuff(world, camera);
@@ -419,21 +418,18 @@ void worldrenderInit(World *world, Camera *camera)
 	}
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, terrainId);
-	glShadeModel(GL_FLAT);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, (GLfloat[]){1, 1, 1, 1});
+
 	// create ambient light
-	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, (GLfloat[]){1, 1, 1, 1});
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, (GLfloat[]){0.8, 0.8, 0.8, 1});
 
-	// create light 0
+	// create light 0 (sun)
 	glEnable(GL_LIGHT0);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, (GLfloat[]){0.5, 0.5, 1, 1});
-
-	// create light 1
-	glEnable(GL_LIGHT1);
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, (GLfloat[]){1, 0, 0, 1});
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, (GLfloat[]){1, 1, 1, 1});
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
