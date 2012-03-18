@@ -1,3 +1,6 @@
+//! @file
+
+#define _GNU_SOURCE
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -13,6 +16,10 @@
 
 static long timer = 0;
 static int vertices;
+
+static void *versionFont = GLUT_BITMAP_HELVETICA_18;
+static Vector2f versionPos;
+static char *versionStr;
 
 static Chunk *debugChunk;
 
@@ -393,6 +400,9 @@ void worldrenderDrawGui(World *world, Camera *camera)
 		glVertex2f(0.55,0.5);
 	}; glEnd();
 
+	glRasterPos2f(versionPos.x, versionPos.y);
+	glutBitmapString(versionFont, (unsigned char*)versionStr);
+
 	glPopMatrix();
 }
 
@@ -404,6 +414,11 @@ void worldrenderInit(World *world, Camera *camera)
 		exit(EXIT_FAILURE);
 	}
 	printf("glew: %s\n", glewGetString(GLEW_VERSION));
+
+	if (asprintf(&versionStr, "MMB \"%s\" %s", CODENAME, VERSION) == -1) {
+		fprintf(stderr, "Out of memory.\n");
+		exit(EXIT_FAILURE);
+	}
 
 	debugChunk = worldGetChunk(world, (Vector3i){-4,-2,0});
 
@@ -477,6 +492,11 @@ void worldrenderReshape(World *world, Camera *camera, int w, int h)
 	// on projection matrix:
 	glLoadIdentity();
 	gluPerspective(45, (double)w/h, 1, 200);
+
+	// calculate position for version string
+	versionPos = (Vector2f){
+		(float)6/w,
+		(float)(h - glutBitmapHeight(versionFont))/h};
 }
 
 void worldrenderDraw(World *world, Camera *camera)
