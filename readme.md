@@ -1,12 +1,21 @@
 MMB
 ======
 
-A software to display a small amount of white blocks using openGL.
+A software to display a large amount of textured cubes using openGL.
 
 Dependencies
 ------------
 
+* OpenGL
 * freeglut
+* glew
+* soil
+
+Building and running
+--------------------
+
+	$ make
+	$ ./mmb
 
 Coding Convention
 -----------------
