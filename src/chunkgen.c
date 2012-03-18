@@ -442,11 +442,11 @@ void chunkgenCreate(World *world, Vector3i low) {
 	printf("\n");
 #endif
 
-	printf("chunk.c: Found %i chunks in %i blocks (%i%%): ",
-			total,
-			blockcount,
-			(int)((float)total / blockcount * 100));
-	VECPRINT(low, "\n");
+//	printf("chunk.c: Found %i chunks in %i blocks (%i%%): ",
+//			total,
+//			blockcount,
+//			(int)((float)total / blockcount * 100));
+//	VECPRINT(low, "\n");
 
 	return;
 }
