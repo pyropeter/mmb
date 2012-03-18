@@ -23,7 +23,6 @@ typedef struct {
 	Camera camera;
 	void (*onMouse)(int button, int state, void *data);
 	void *onMouseData;
-	int vertices;
 } Render;
 
 extern Render *renderInit(int argc, char *argv[]);

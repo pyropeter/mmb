@@ -57,15 +57,16 @@ void rotateCamera(float dax, float day) {
 
 void renderDebug() {
 	printf("===== RENDER DEBUG =====\n");
-	printf("Camera: %1.1f/%1.1f/%1.1f %1.1f/%1.1f/%1.1f %i/%i/%i\n",
+	printf("Camera position: %1.1f/%1.1f/%1.1f (int: %i/%i/%i )\n",
 			render.camera.x,
 			render.camera.y,
 			render.camera.z,
-			render.camera.dx, render.camera.dy, render.camera.dz,
 			render.camera.pos.x,
 			render.camera.pos.y,
 			render.camera.pos.z);
-	printf("Vertices drawn: %i\n", render.vertices);
+	printf("Camera orientation: %1.1f/%1.1f/%1.1f (angle: %1.1f %1.1f )\n",
+			render.camera.dx, render.camera.dy, render.camera.dz,
+			render.camera.ax, render.camera.ay);
 	printf("Camera range: %i\n", render.camera.range);
 	printf("===== END =====\n");
 }
