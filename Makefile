@@ -2,8 +2,8 @@ SHELL = /bin/sh
 .SUFFIXES:
 .SUFFIXES: .c .o
 
-CODENAME = "Numerous White, Removable Cubes"
-DVERSION = v0.3
+CODENAME = "Textured and lit cubes"
+DVERSION = v0.4
 VERSION := $(shell git describe --tags --long --dirty 2>/dev/null \
 		|| echo "$(DVERSION)")
 
