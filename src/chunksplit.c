@@ -20,11 +20,19 @@ void moveBlocks(Chunk *old, Chunk *new)
 	int numBlocks = size.x * size.y * size.z;
 	new->blocks = knalloc(numBlocks * sizeof(Block*));
 
-	// FIXME: can't be tested before the generator uses more
-	// than one block type; write proper code then
-	int i;
-	for (i=0; i<numBlocks; i++) {
-		new->blocks[i] = old->blocks[0];
+	Block **oldblock = old->blocks;
+	Block **newblock = new->blocks;
+	Vector3i p;
+        for (p.x = old->low.x; p.x <= old->high.x; p.x++) {
+        for (p.y = old->low.y; p.y <= old->high.y; p.y++) {
+        for (p.z = old->low.z; p.z <= old->high.z; p.z++) {
+		if (VEC3CMP(new->low, <=, p) && VEC3CMP(p, <=, new->high)) {
+			*newblock = *oldblock;
+			newblock++;
+		}
+		oldblock++;
+	}
+	}
 	}
 }
 
