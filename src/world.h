@@ -28,7 +28,7 @@ typedef struct World {
 	List /*Chunk*/ *chunksToUpdate;
 	
 	// chunkgen
-	AnnotatedBlock *annotatedBlocks;
+	void *annotatedBlocks;
 } World;
 
 extern World *worldInit(Block *(*gen)(Vector3i));

@@ -9,6 +9,13 @@
 #include "defs.h"
 #include "chunkgen.h"
 
+typedef struct AnnotatedBlock {
+	Block *block;
+	Vector2i low, high;
+	Vector2i low2, high2;
+	Chunk *chunk;
+} AnnotatedBlock;
+
 /**
  * Allocates and initializes memory for one Chunk
  * 
