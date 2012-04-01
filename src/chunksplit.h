@@ -1,3 +1,5 @@
+//! @file
+
 #ifndef _MMB_CHUNKSPLIT_H
 #define _MMB_CHUNKSPLIT_H
 

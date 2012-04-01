@@ -1,3 +1,5 @@
+//! @file
+
 #ifndef _MMB_RENDER_H
 #define _MMB_RENDER_H
 

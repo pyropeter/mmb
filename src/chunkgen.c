@@ -1,6 +1,4 @@
-/**
- * @file
- */
+//! @file
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -28,6 +26,7 @@ Chunk *newChunk(World *world) {
 
 	chunk->adjacent = listNew();
 	chunk->blocks = NULL;
+	chunk->bubble = NULL;
 
 	listInsert(world->chunks, chunk);
 	return chunk;

@@ -1,6 +1,4 @@
-/**
- * @file
- */
+//! @file
 
 #ifndef _MMB_WORLD_H
 #define _MMB_WORLD_H
@@ -14,6 +12,7 @@ typedef struct World {
 
 	int cookie;
 	List /*Chunk*/ *chunks;
+	List /*Bubble*/ *bubbles;
 	
 	Vector3i groupSize;
 	List /*ChunkGroup*/ *chunkGroups;
@@ -34,6 +33,7 @@ typedef struct World {
 extern World *worldInit(Block *(*gen)(Vector3i));
 extern Chunk *worldGetChunk(World *world, Vector3i pos);
 extern Chunk *worldGetChunkFast(World *world, Vector3i pos);
+extern Bubble *worldGetBubble(World *world, Vector3i pos);
 extern void worldUpdateChunk(World *world, Chunk *chunk);
 extern void worldAfterFrame(World *world);
 extern void worldSetBlock(World *world, Vector3i pos, Block *block);

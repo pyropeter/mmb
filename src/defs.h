@@ -1,3 +1,5 @@
+//! @file
+
 #ifndef _MMB_DEFS_H
 #define _MMB_DEFS_H
 

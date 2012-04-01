@@ -33,6 +33,16 @@ struct vertexData {
 	GLbyte nx, ny, nz; // 23
 };
 
+typedef struct VisRegion {
+	Chunk *someChunk;
+	ChunkGroup *group;
+	List /* VisRegion */ *adjacent;
+
+	int lastRender;
+	int indexStart;
+	int indexLen;
+} VisRegion;
+
 static int vboUpdate = 1;
 static struct vertexData *vertexMem;
 static struct vertexData *vertexMemNext;
@@ -240,6 +250,17 @@ int isVisible(Camera *camera, Chunk *chunk) {
 	return 1;
 }
 
+int isBubbleVisible(Camera *camera, Bubble *bubble) {
+	if(bubble->chunk->low.x > camera->high.x
+	|| bubble->chunk->low.y > camera->high.y
+	|| bubble->chunk->low.z > camera->high.z
+	|| bubble->chunk->high.x < camera->low.x
+	|| bubble->chunk->high.y < camera->low.y
+	|| bubble->chunk->high.z < camera->low.z)
+		return 0;
+	return 1;
+}
+
 void findChunks(World *world, Camera *camera, Chunk *chunk) {
 	if (!isVisible(camera, chunk))
 		return;
@@ -257,6 +278,41 @@ void findChunks(World *world, Camera *camera, Chunk *chunk) {
 			if ((*other)->cookie != world->cookie)
 				findChunks(world, camera, *other);
 		}
+	}
+}
+
+void renderBubbleChunk(World *world, Camera *camera,
+		Bubble *bubble, Chunk *chunk)
+{
+	chunk->cookie = world->cookie;
+
+	Chunk **other;
+	LISTITER(chunk->adjacent, other, Chunk**) {
+		if ((*other)->blocks) {
+			// other is solid
+			drawAdjacentChunk(camera, chunk, *other);
+		} else {
+			// other is transparent
+			if ((*other)->cookie != world->cookie
+					&& (*other)->bubble == bubble)
+				renderBubbleChunk(world, camera,
+						bubble, *other);
+		}
+	}
+}
+
+void findBubbles(World *world, Camera *camera, Bubble *bubble)
+{
+	if (!isBubbleVisible(camera, bubble))
+		return;
+
+	bubble->cookie = world->cookie;
+	renderBubbleChunk(world, camera, bubble, bubble->chunk);
+
+	Bubble **other;
+	LISTITER(bubble->adjacent, other, Bubble**) {
+		if ((*other)->cookie != world->cookie)
+			findBubbles(world, camera, *other);
 	}
 }
 
@@ -337,8 +393,11 @@ void worldrenderDrawSzene(World *world, Camera *camera)
 		vertexMemNext = vertexMem;
 		vboEntryCount = 0;
 
-		Chunk *startChunk = worldGetChunk(world, camera->pos);
-		findChunks(world, camera, startChunk);
+//		Chunk *startChunk = worldGetChunk(world, camera->pos);
+//		findChunks(world, camera, startChunk);
+
+		Bubble *startBubble = worldGetBubble(world, camera->pos);
+		findBubbles(world, camera, startBubble);
 
 		// update vbo
 //		glGenBuffers(1, &vertexVboId);
@@ -513,7 +572,7 @@ void worldrenderDraw(World *world, Camera *camera)
 	glFinish();
 	gui = stopTimer(timer);
 
-//	glutSwapBuffers();
+	glutSwapBuffers();
 	glFinish();
 	draw = stopTimer(timer);
 

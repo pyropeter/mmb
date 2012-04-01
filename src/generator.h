@@ -1,3 +1,5 @@
+//! @file
+
 #ifndef _MMB_GENERATOR_H
 #define _MMB_GENERATOR_H
 

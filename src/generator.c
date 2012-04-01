@@ -1,7 +1,4 @@
-/* 
- * gcc -Wall -lm -g -c generator.c -o generator
- * 
- * */
+//! @file
 
 #include <stdlib.h>
 #include <stdio.h>

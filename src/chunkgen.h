@@ -1,6 +1,4 @@
-/**
- * @file
- */
+//! @file
 
 #ifndef _MMB_CHUNKGEN_H
 #define _MMB_CHUNKGEN_H

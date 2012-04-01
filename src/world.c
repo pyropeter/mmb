@@ -1,6 +1,4 @@
-/**
- * @file
- */
+//! @file
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -10,6 +8,7 @@
 #include "world.h"
 #include "chunkgen.h"
 #include "chunksplit.h"
+#include "bubble.h"
 
 /**
  * Creates and initializes a World
@@ -20,6 +19,7 @@ World *worldInit(Block *(*gen)(Vector3i)) {
 	World *world = knalloc(sizeof(World));
 	world->cookie = 0;
 	world->chunks = listNew(sizeof(Chunk*));
+	world->bubbles = listNew(sizeof(Bubble*));
 
 	world->generator = gen;
 
@@ -124,6 +124,23 @@ Chunk *worldGetChunk(World *world, Vector3i pos) {
 	chunkgenCreate(world, batchPos);
 
 	return searchAllChunks(world, pos);
+}
+
+/**
+ * Returns the Bubble at position pos
+ *
+ * If no bubble at that position exists, it is generated.
+ *
+ * If there is a solid block at pos, NULL is returned.
+ */
+Bubble *worldGetBubble(World *world, Vector3i pos)
+{
+	Chunk *chunk = worldGetChunk(world, pos);
+
+	if (!chunk->bubble && !chunk->blocks)
+		bubbleGen(world, chunk);
+
+	return chunk->bubble;
 }
 
 /**

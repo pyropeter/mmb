@@ -1,9 +1,4 @@
-/* 
- * 
- * 
- * gcc -Wall -g -c render.c -o render
- * 
- * */
+//! @file
 
 #include "render.h"
 

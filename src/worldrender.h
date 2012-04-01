@@ -1,3 +1,5 @@
+//! @file
+
 #ifndef _MMB_WORLDRENDER_H
 #define _MMB_WORLDRENDER_H
 

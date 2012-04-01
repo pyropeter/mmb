@@ -1,6 +1,4 @@
-/**
- * @file
- */
+//! @file
 
 #ifndef _MMB_CHUNK_H
 #define _MMB_CHUNK_H
@@ -9,10 +7,23 @@
 #include "vector.h"
 #include "block.h"
 
+typedef struct Chunk Chunk;
+
+typedef struct Bubble {
+	int status;
+	int cookie;
+
+	List /*Bubble*/ *adjacent;
+
+	Chunk *chunk;
+} Bubble;
+
 typedef struct Chunk {
 	Vector3i low, high;
 	int status;
 	int cookie;
+
+	Bubble *bubble;
 
 	List /*Chunk*/ *adjacent;
 
