@@ -239,17 +239,6 @@ void drawAdjacentChunk(Camera *camera, Chunk *chunk, Chunk *other) {
 #undef LOOP
 }
 
-int isVisible(Camera *camera, Chunk *chunk) {
-	if(chunk->low.x > camera->high.x
-	|| chunk->low.y > camera->high.y
-	|| chunk->low.z > camera->high.z
-	|| chunk->high.x < camera->low.x
-	|| chunk->high.y < camera->low.y
-	|| chunk->high.z < camera->low.z)
-		return 0;
-	return 1;
-}
-
 int isBubbleVisible(Camera *camera, Bubble *bubble) {
 	if(bubble->chunk->low.x > camera->high.x
 	|| bubble->chunk->low.y > camera->high.y
@@ -259,26 +248,6 @@ int isBubbleVisible(Camera *camera, Bubble *bubble) {
 	|| bubble->chunk->high.z < camera->low.z)
 		return 0;
 	return 1;
-}
-
-void findChunks(World *world, Camera *camera, Chunk *chunk) {
-	if (!isVisible(camera, chunk))
-		return;
-
-	worldUpdateChunk(world, chunk);
-	chunk->cookie = world->cookie;
-
-	Chunk **other;
-	LISTITER(chunk->adjacent, other, Chunk**) {
-		if ((*other)->blocks) {
-			// other is solid
-			drawAdjacentChunk(camera, chunk, *other);
-		} else {
-			// other is transparent
-			if ((*other)->cookie != world->cookie)
-				findChunks(world, camera, *other);
-		}
-	}
 }
 
 void renderBubbleChunk(World *world, Camera *camera,
@@ -383,13 +352,6 @@ void worldrenderDrawSzene(World *world, Camera *camera)
 
 	glEnable(GL_TEXTURE_2D);
 
-//	Chunk *startChunk = worldGetChunk(world, camera->pos);
-//	startChunk->cookie = world->cookie;
-
-//	glBegin(GL_QUADS);
-//	findChunks(world, camera, startChunk);
-//	glEnd();
-
 	if (vboUpdate || world->bubblesUpdated > 0) {
 		vertices = 0;
 		// update vertexMem and indexMem
@@ -397,46 +359,16 @@ void worldrenderDrawSzene(World *world, Camera *camera)
 		vertexMemNext = vertexMem;
 		vboEntryCount = 0;
 
-//		Chunk *startChunk = worldGetChunk(world, camera->pos);
-//		findChunks(world, camera, startChunk);
-
 		Bubble *startBubble = worldGetBubble(world, camera->pos);
 		findBubbles(world, camera, startBubble);
 
-		// update vbo
-//		glGenBuffers(1, &vertexVboId);
-//		glGenBuffers(1, &indexVboId);
-
-//		glBindBuffer(GL_ARRAY_BUFFER, vertexVboId);
-//		glBufferData(GL_ARRAY_BUFFER, VBO_MAX_ENTRIES
-//				* sizeof(struct vertexData), vertexMem,
-//				GL_STATIC_DRAW);
-//		glBufferSubData(GL_ARRAY_BUFFER, 0, VBO_MAX_ENTRIES
-//				* sizeof(struct vertexData), vertexMem);
 		glUnmapBuffer(GL_ARRAY_BUFFER);
-
-//		glBindBuffer(GL_ARRAY_BUFFER, indexVboId);
-//		glBufferData(GL_ELEMENT_ARRAY_BUFFER, VBO_MAX_ENTRIES
-//				* sizeof(unsigned int), indexMem,
-//				GL_STATIC_DRAW);
-//		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, VBO_MAX_ENTRIES
-//				* sizeof(unsigned int), indexMem);
 
 		vboUpdate = 0;
 	}
 
 	// draw the scene
-//	glBindBuffer(GL_ARRAY_BUFFER, vertexVboId);
-//	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexVboId);
-//	glEnableClientState(GL_VERTEX_ARRAY);
-//	glEnableClientState(GL_NORMAL_ARRAY);
-//	glVertexPointer(3, GL_FLOAT, sizeof(struct vertexData), (GLvoid*) 0);
-//	glNormalPointer(GL_BYTE, sizeof(struct vertexData), (GLvoid*) 12);
 	glDrawElements(GL_QUADS, vboEntryCount, GL_UNSIGNED_INT, (GLvoid*) 0);
-//	glDisableClientState(GL_VERTEX_ARRAY);
-//	glDisableClientState(GL_NORMAL_ARRAY);
-//	glBindBuffer(GL_ARRAY_BUFFER, 0);
-//	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_LIGHTING);
@@ -534,12 +466,9 @@ void worldrenderInit(World *world, Camera *camera)
 	glBufferData(GL_ARRAY_BUFFER, VBO_MAX_ENTRIES
 			* sizeof(struct vertexData), NULL,
 			GL_STATIC_DRAW);
-//			GL_DYNAMIC_DRAW);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, VBO_MAX_ENTRIES
 			* sizeof(unsigned int), indexMem,
-//			* sizeof(unsigned int), NULL,
 			GL_STATIC_DRAW);
-//			GL_DYNAMIC_DRAW);
 
 	glVertexPointer(3, GL_FLOAT, sizeof(struct vertexData), (GLvoid*) 0);
 	glTexCoordPointer(2, GL_FLOAT, sizeof(struct vertexData), (GLvoid*) 12);

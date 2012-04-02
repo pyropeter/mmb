@@ -187,65 +187,6 @@ Bubble * worldGetBubble(World *world, Vector3i pos)
 }
 
 /**
- * Marks a chunk for updating by worldAfterFrame()
- */
-void worldUpdateChunk(World *world, Chunk *chunk)
-{
-	if (chunk->status == 0)
-		return;
-
-	listInsert(world->chunksToUpdate, chunk);
-}
-
-/**
- * Updates the Chunks marked by worldUpdateChunk()
- * 
- * This generates one ChunkGroup adjacent to each marked Chunk.
- * At most world->maxChunksToUpdate Chunks are updated (to limit the lag).
- */
-void worldAfterFrame_(World *world)
-{
-	Chunk** chunk;
-	Vector3i pos;
-	world->chunksUpdated = 0;
-
-	LISTITER(world->chunksToUpdate, chunk, Chunk**) {
-#ifdef MMB_DEBUG_CHUNK
-		printf("Updating chunk %p, status %i\n",
-				*chunk, (*chunk)->status);
-#endif
-
-		pos.x = divRoundDown((*chunk)->low.x, world->groupSize.x);
-		pos.y = divRoundDown((*chunk)->low.y, world->groupSize.y);
-		pos.z = divRoundDown((*chunk)->low.z, world->groupSize.z);
-
-		if      ((*chunk)->status & DIR_XG)
-			pos.x++;
-		else if ((*chunk)->status & DIR_XS)
-			pos.x--;
-		else if ((*chunk)->status & DIR_YG)
-			pos.y++;
-		else if ((*chunk)->status & DIR_YS)
-			pos.y--;
-		else if ((*chunk)->status & DIR_ZG)
-			pos.z++;
-		else if ((*chunk)->status & DIR_ZS)
-			pos.z--;
-		else
-			continue;
-
-		pos = VEC3IOP(pos, *, world->groupSize);
-		chunkgenCreate(world, pos);
-
-		world->chunksUpdated++;
-		if (world->chunksUpdated == world->maxChunksToUpdate)
-			break;
-	}
-
-	listEmpty(world->chunksToUpdate);
-}
-
-/**
  * Marks a Bubble for updating by worldAfterFrame()
  */
 void worldUpdateBubble(World *world, Bubble *bubble)
