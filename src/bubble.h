@@ -9,5 +9,7 @@
 
 extern Bubble * bubbleGen(World *world, Chunk *chunk);
 extern void bubbleUpdate(World *world, Bubble *bubble);
+extern void bubbleSplit(World *world, Chunk *chunk);
+extern void bubbleMerge(World *world, Chunk *chunk);
 
 #endif /* _MMB_BUBBLE_H */

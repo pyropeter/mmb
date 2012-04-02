@@ -41,6 +41,7 @@ extern ChunkGroup * worldGetChunkGroup(World *world, Vector3i pos);
 extern Bubble * worldGetBubbleFromChunk(World *world, Chunk *chunk);
 extern Bubble * worldGetBubble(World *world, Vector3i pos);
 extern void worldUpdateChunk(World *world, Chunk *chunk);
+extern void worldUpdateBubble(World *world, Bubble *bubble);
 extern void worldAfterFrame(World *world);
 extern void worldSetBlock(World *world, Vector3i pos, Block *block);
 

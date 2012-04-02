@@ -250,7 +250,7 @@ void worldAfterFrame_(World *world)
  */
 void worldUpdateBubble(World *world, Bubble *bubble)
 {
-	if (bubble->edge & bubble->chunkGroup->status)
+	if (bubble->status == 0)
 		listInsert(world->bubblesToUpdate, bubble);
 }
 
@@ -271,8 +271,12 @@ void worldAfterFrame(World *world)
 	LISTITER(world->bubblesToUpdate, bubble, Bubble**) {
 		int missing = (*bubble)->edge & (*bubble)->chunkGroup->status;
 
-		if (missing == 0)
+		if (missing == 0) {
+			if ((*bubble)->status == 0)
+				bubbleUpdate(world, *bubble);
+
 			continue;
+		}
 
 #ifdef MMB_DEBUG_CHUNK
 		printf("Updating bubble %p, missing %i\n",
@@ -330,10 +334,12 @@ void worldSetBlock(World *world, Vector3i pos, Block *block)
 	if (block->solid == 0) {
 		free(chunk->blocks);
 		chunk->blocks = NULL;
+		bubbleMerge(world, chunk);
 	} else {
 		if (chunk->blocks == NULL)
 			chunk->blocks = knalloc(sizeof(Block*));
 		chunk->blocks[0] = block;
+		bubbleSplit(world, chunk);
 	}
 }
 

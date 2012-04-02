@@ -20,9 +20,15 @@ typedef struct AnnotatedBlock {
  * This also adds the Chunk to the world's list of chunks.
  */
 Chunk *newChunk(World *world) {
+	//
+	// REMEMBER: 2nd initialisation in chunksplit.c
+	// All changes here must probably be done there, too.
+	// This is stupid bullshit ->
+	// 	TODO: modify chunksplit to use newChunk()
+	//
 	Chunk *chunk = knalloc(sizeof(Chunk));
 	chunk->status = 0;
-	chunk->cookie = -1;
+	chunk->cookie = world->cookie - 1;
 
 	chunk->adjacent = listNew();
 	chunk->blocks = NULL;
@@ -457,7 +463,7 @@ void chunkgenCreate(World *world, Vector3i low) {
 //			total,
 //			blockcount,
 //			(int)((float)total / blockcount * 100));
-//	VECPRINT(low, "\n");
+	VECPRINT(low, "\n");
 
 	return;
 }

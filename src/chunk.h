@@ -12,6 +12,7 @@ typedef struct ChunkGroup ChunkGroup;
 
 typedef struct Bubble {
 	int edge;
+	int status;
 	int cookie;
 
 	List /*Bubble*/ *adjacent;

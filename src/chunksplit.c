@@ -145,6 +145,7 @@ void chunksplitSplitOnce(World *world, Chunk *chunk, int cutDir, int cutPos)
 
 	one->status = two->status = 0;
 	one->cookie = two->cookie = 0;
+	one->bubble = two->bubble = chunk->bubble;
 
 	one->low = two->low = chunk->low;
 	one->high = two->high = chunk->high;

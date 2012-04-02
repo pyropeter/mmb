@@ -303,11 +303,14 @@ void renderBubbleChunk(World *world, Camera *camera,
 
 void findBubbles(World *world, Camera *camera, Bubble *bubble)
 {
+	bubble->cookie = world->cookie;
+	worldUpdateBubble(world, bubble);
+	if (bubble->status == 0)
+		return;
+
 	if (!isBubbleVisible(camera, bubble))
 		return;
 
-	bubble->cookie = world->cookie;
-	worldUpdateBubble(world, bubble);
 	renderBubbleChunk(world, camera, bubble, bubble->chunk);
 
 	Bubble **other;
@@ -594,8 +597,8 @@ void worldrenderDraw(World *world, Camera *camera)
 	timer = startTimer();
 
 	// print statistics
-	printf("frame: %i %5li %5li %5li %5li %5li %5li\n", vertices,
-			pre, scene, gui, draw, update, sleep);
+//	printf("frame: %i %5li %5li %5li %5li %5li %5li\n", vertices,
+//			pre, scene, gui, draw, update, sleep);
 	fflush(stdout);
 }
 
