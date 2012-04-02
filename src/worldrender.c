@@ -239,13 +239,13 @@ void drawAdjacentChunk(Camera *camera, Chunk *chunk, Chunk *other) {
 #undef LOOP
 }
 
-int isBubbleVisible(Camera *camera, Bubble *bubble) {
-	if(bubble->chunk->low.x > camera->high.x
-	|| bubble->chunk->low.y > camera->high.y
-	|| bubble->chunk->low.z > camera->high.z
-	|| bubble->chunk->high.x < camera->low.x
-	|| bubble->chunk->high.y < camera->low.y
-	|| bubble->chunk->high.z < camera->low.z)
+int isVisible(Camera *camera, Chunk *chunk) {
+	if(chunk->low.x > camera->high.x
+	|| chunk->low.y > camera->high.y
+	|| chunk->low.z > camera->high.z
+	|| chunk->high.x < camera->low.x
+	|| chunk->high.y < camera->low.y
+	|| chunk->high.z < camera->low.z)
 		return 0;
 	return 1;
 }
@@ -277,7 +277,7 @@ void findBubbles(World *world, Camera *camera, Bubble *bubble)
 	if (bubble->status == 0)
 		return;
 
-	if (!isBubbleVisible(camera, bubble))
+	if (!isVisible(camera, bubble->chunk))
 		return;
 
 	renderBubbleChunk(world, camera, bubble, bubble->chunk);
