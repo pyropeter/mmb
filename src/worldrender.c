@@ -307,6 +307,7 @@ void findBubbles(World *world, Camera *camera, Bubble *bubble)
 		return;
 
 	bubble->cookie = world->cookie;
+	worldUpdateBubble(world, bubble);
 	renderBubbleChunk(world, camera, bubble, bubble->chunk);
 
 	Bubble **other;
@@ -386,7 +387,7 @@ void worldrenderDrawSzene(World *world, Camera *camera)
 //	findChunks(world, camera, startChunk);
 //	glEnd();
 
-	if (vboUpdate || world->chunksUpdated > 0) {
+	if (vboUpdate || world->bubblesUpdated > 0) {
 		vertices = 0;
 		// update vertexMem and indexMem
 		vertexMem = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
@@ -565,19 +566,19 @@ void worldrenderDraw(World *world, Camera *camera)
 	pre = stopTimer(timer);
 
 	worldrenderDrawSzene(world, camera);
-	glFinish();
+//	glFinish();
 	scene = stopTimer(timer);
 
 	worldrenderDrawGui(world, camera);
-	glFinish();
+//	glFinish();
 	gui = stopTimer(timer);
 
-	glutSwapBuffers();
-	glFinish();
+//	glutSwapBuffers();
+//	glFinish();
 	draw = stopTimer(timer);
 
 	worldAfterFrame(world);
-	glFinish();
+//	glFinish();
 	update = stopTimer(timer);
 
 	// hold constant framerate

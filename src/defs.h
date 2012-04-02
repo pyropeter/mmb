@@ -32,6 +32,7 @@ extern void listRemove(List *list, void *element);
 #define DIR_ZG 16
 #define DIR_ZS 32
 #define DIR_OPPOSITE(dir) ((dir & 21) ? dir << 1 : dir >> 1)
+#define DIR_ALL 63
 
 #define PLANE_XY 1
 #define PLANE_XZ 2

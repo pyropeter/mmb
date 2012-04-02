@@ -74,9 +74,9 @@ src/main.o: src/defs.h src/vector.h src/render.h src/generator.h
 src/main.o: src/block.h src/world.h src/chunk.h src/worldrender.h
 src/main.o: src/raytrace.h
 src/world.o: src/defs.h src/vector.h src/world.h src/chunk.h
-src/world.o: src/block.h src/chunkgen.h src/chunksplit.h
+src/world.o: src/block.h src/chunkgen.h src/chunksplit.h src/bubble.h
 src/render.o: src/render.h src/defs.h src/vector.h
-src/bubble.o: src/bubble.h src/defs.h src/vector.h src/world.h
+src/bubble.o: src/defs.h src/bubble.h src/vector.h src/world.h
 src/bubble.o: src/chunk.h src/block.h
 src/raytrace.o: src/raytrace.h src/vector.h src/world.h src/defs.h
 src/raytrace.o: src/chunk.h src/block.h

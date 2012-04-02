@@ -8,14 +8,16 @@
 #include "block.h"
 
 typedef struct Chunk Chunk;
+typedef struct ChunkGroup ChunkGroup;
 
 typedef struct Bubble {
-	int status;
+	int edge;
 	int cookie;
 
 	List /*Bubble*/ *adjacent;
 
 	Chunk *chunk;
+	ChunkGroup *chunkGroup;
 } Bubble;
 
 typedef struct Chunk {
@@ -32,6 +34,9 @@ typedef struct Chunk {
 
 typedef struct ChunkGroup {
 	Vector3i low;
+
+	int status;
+
 	List /*Chunk*/ *chunksXS, *chunksXG;
 	List /*Chunk*/ *chunksYS, *chunksYG;
 	List /*Chunk*/ *chunksZS, *chunksZG;

@@ -41,6 +41,7 @@ ChunkGroup *newChunkGroup(World *world, Vector3i low) {
 	ChunkGroup *chunkGroup = knalloc(sizeof(ChunkGroup));
 
 	chunkGroup->low = low;
+	chunkGroup->status = DIR_ALL;
 	chunkGroup->chunksXS = listNew();
 	chunkGroup->chunksXG = listNew();
 	chunkGroup->chunksYS = listNew();
@@ -400,6 +401,15 @@ void chunkgenCreate(World *world, Vector3i low) {
 	// merge this ChunkGroup with adjacent ChunkGroups
 	ChunkGroup **otherGroup;
 	Vector3i diff;
+
+#define DOFOO(chunks, dir) \
+	{ \
+		chunkGroup->status &= ~dir; \
+		(*otherGroup)->status &= ~DIR_OPPOSITE(dir); \
+		mergeGroup(world, blocks, low, size, \
+				(*otherGroup)->chunks, dir); \
+	}
+
 	LISTITER(world->chunkGroups, otherGroup, ChunkGroup**) {
 		if (*otherGroup == chunkGroup)
 			continue;
@@ -407,24 +417,19 @@ void chunkgenCreate(World *world, Vector3i low) {
 		diff = VEC3IOP((*otherGroup)->low, -, low);
 
 		if      (-diff.x == world->groupSize.x && !diff.y && !diff.z)
-			mergeGroup(world, blocks, low, size,
-					(*otherGroup)->chunksXG, DIR_XS);
+			DOFOO(chunksXG, DIR_XS)
 		else if (diff.x == world->groupSize.x && !diff.y && !diff.z)
-			mergeGroup(world, blocks, low, size,
-					(*otherGroup)->chunksXS, DIR_XG);
+			DOFOO(chunksXS, DIR_XG)
 		else if (!diff.x && -diff.y == world->groupSize.y && !diff.z)
-			mergeGroup(world, blocks, low, size,
-					(*otherGroup)->chunksYG, DIR_YS);
+			DOFOO(chunksYG, DIR_YS)
 		else if (!diff.x && diff.y == world->groupSize.y && !diff.z)
-			mergeGroup(world, blocks, low, size,
-					(*otherGroup)->chunksYS, DIR_YG);
+			DOFOO(chunksYS, DIR_YG)
 		else if (!diff.x && !diff.y && -diff.z == world->groupSize.z)
-			mergeGroup(world, blocks, low, size,
-					(*otherGroup)->chunksZG, DIR_ZS);
+			DOFOO(chunksZG, DIR_ZS)
 		else if (!diff.x && !diff.y && diff.z == world->groupSize.z)
-			mergeGroup(world, blocks, low, size,
-					(*otherGroup)->chunksZS, DIR_ZG);
+			DOFOO(chunksZS, DIR_ZG)
 	}
+#undef DOFOO
 
 #ifdef MMB_DEBUG_CHUNKGEN
 	printf(" x  y  z | low   | hig   | lo2   | hi2   | chunk | status\n");
