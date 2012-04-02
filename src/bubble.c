@@ -137,14 +137,14 @@ void bubbleSplit(World *world, Chunk *chunk)
 			assert((*otherChunk)->blocks == NULL);
 			
 			bubbleGen(world, *otherChunk);
-			bubbleUpdate(world, (*otherChunk)->bubble);
+//			bubbleUpdate(world, (*otherChunk)->bubble);
 		}
 	}
 
 	Bubble **otherBubble;
 	LISTITER(old->adjacent, otherBubble, Bubble**) {
 		(*otherBubble)->status = 0;
-		bubbleUpdate(world, *otherBubble);
+//		bubbleUpdate(world, *otherBubble);
 	}
 
 	bubbleFree(old);
@@ -152,6 +152,41 @@ void bubbleSplit(World *world, Chunk *chunk)
 
 void bubbleMerge(World *world, Chunk *chunk)
 {
-	return;
+	static List *list;
+	if (!list)
+		list = listNew();
+	else
+		listEmpty(list);
+
+	world->cookie++;
+
+	ChunkGroup *chunkGroup = worldGetChunkGroup(world, chunk->low);
+
+	Chunk **otherChunk;
+	LISTITER(chunk->adjacent, otherChunk, Chunk**) {
+		if ( ! (*otherChunk)->bubble)
+			continue;
+
+		if ((*otherChunk)->bubble->chunkGroup == chunkGroup
+				&& (*otherChunk)->bubble->cookie
+						!= world->cookie) {
+			listInsert(list, (*otherChunk)->bubble);
+			(*otherChunk)->bubble->cookie = world->cookie;
+		} else {
+			(*otherChunk)->bubble->status = 0;
+		}
+	}
+
+	Bubble **bubble;
+	LISTITER(list, bubble, Bubble**) {
+		bubbleFree(*bubble);
+	}
+
+	bubbleGen(world, chunk);
+
+	bubbleUpdate(world, chunk->bubble);
+	LISTITER(chunk->bubble->adjacent, bubble, Bubble**) {
+		(*bubble)->status = 0;
+	}
 }
 
