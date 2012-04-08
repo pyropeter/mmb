@@ -360,7 +360,8 @@ void worldrenderDrawSzene(World *world, Camera *camera)
 		vboEntryCount = 0;
 
 		Bubble *startBubble = worldGetBubble(world, camera->pos);
-		findBubbles(world, camera, startBubble);
+		if (startBubble)
+			findBubbles(world, camera, startBubble);
 
 		glUnmapBuffer(GL_ARRAY_BUFFER);
 
