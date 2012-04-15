@@ -33,16 +33,6 @@ struct vertexData {
 	GLbyte nx, ny, nz; // 23
 };
 
-typedef struct VisRegion {
-	Chunk *someChunk;
-	ChunkGroup *group;
-	List /* VisRegion */ *adjacent;
-
-	int lastRender;
-	int indexStart;
-	int indexLen;
-} VisRegion;
-
 static int vboUpdate = 1;
 static struct vertexData *vertexMem;
 static struct vertexData *vertexMemNext;
