@@ -31,12 +31,16 @@ void onReshape(int w, int h)
 
 void onMouse(int button, int state, void *data)
 {
-	if (state == GLUT_UP && button == GLUT_LEFT_BUTTON) {
-		worldSetBlock(world, ray->first, blockGet(BLOCKTYPE_AIR));
-	} else if (state == GLUT_UP && button == GLUT_RIGHT_BUTTON) {
-		worldSetBlock(world, ray->last, blockGet(BLOCKTYPE_CHEST));
+	if (state == GLUT_UP) {
+		if (button == GLUT_LEFT_BUTTON) {
+			worldSetBlock(world, ray->first,
+					blockGet(BLOCKTYPE_AIR));
+		} else if (button == GLUT_RIGHT_BUTTON) {
+			worldSetBlock(world, ray->last,
+					blockGet(BLOCKTYPE_CHEST));
+		}
+		worldrenderRefresh();
 	}
-	worldrenderRefresh();
 }
 
 int main(int argc, char *argv[]) {

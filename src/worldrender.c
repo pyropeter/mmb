@@ -33,11 +33,13 @@ struct vertexData {
 	GLbyte nx, ny, nz; // 23
 };
 
-static int vboUpdate = 1;
+static int vboUpdate = 0;
+static int vboUpdateFinished = 0;
 static struct vertexData *vertexMem;
 static struct vertexData *vertexMemNext;
 static unsigned int *indexMem;
-static int vboEntryCount;
+static int vertexMemEntryCount = 0;
+static int vboEntryCount = 0;
 #define VBO_MAX_ENTRIES 2000000
 static GLuint vertexVboId;
 static GLuint indexVboId;
@@ -69,7 +71,7 @@ void blockDrawFace(Block *block, int x, int y, int z, int dir) {
 	if (block->solid == 0)
 		return;
 
-	if (vboEntryCount + 24 > VBO_MAX_ENTRIES)
+	if (vertexMemEntryCount + 24 > VBO_MAX_ENTRIES)
 		return;
 
 	Vector4f t;
@@ -110,10 +112,12 @@ void blockDrawFace(Block *block, int x, int y, int z, int dir) {
 		*(vertexMemNext++) = (struct vertexData){1+x,0+y,1+z,t.z,t.w,0,0,127};
 		*(vertexMemNext++) = (struct vertexData){1+x,1+y,1+z,t.z,t.y,0,0,127};
 		*(vertexMemNext++) = (struct vertexData){0+x,1+y,1+z,t.x,t.y,0,0,127};
+	} else {
+		return;
 	}
 
 	vertices += 4;
-	vboEntryCount += 4;
+	vertexMemEntryCount += 4;
 }
 
 //! draw chunk's bounding rectangle as wireframe
@@ -334,15 +338,21 @@ void worldrenderDrawSzene(World *world, Camera *camera)
 			camera->z + camera->dz,
 			0, 1, 0);
 
-	world->cookie++;
-
 	// reenable lighting:
 	glEnable(GL_LIGHTING);
 	glLightfv(GL_LIGHT0, GL_POSITION, (GLfloat[]){0, 1, 0, 0});
 
 	glEnable(GL_TEXTURE_2D);
 
-	if (vboUpdate || world->bubblesUpdated > 0) {
+	if (vboUpdateFinished) {
+		glBufferSubData(GL_ARRAY_BUFFER, 0, vertexMemEntryCount *
+				sizeof(struct vertexData), vertexMem);
+		vboEntryCount = vertexMemEntryCount;
+
+		printf("refresh\n");
+		vboUpdateFinished = 0;
+	}
+/*	if (vboUpdate || world->bubblesUpdated > 0) {
 		vertices = 0;
 		// update vertexMem and indexMem
 		vertexMem = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
@@ -357,7 +367,7 @@ void worldrenderDrawSzene(World *world, Camera *camera)
 
 		vboUpdate = 0;
 	}
-
+*/
 	// draw the scene
 	glDrawElements(GL_QUADS, vboEntryCount, GL_UNSIGNED_INT, (GLvoid*) 0);
 
@@ -390,6 +400,26 @@ void worldrenderDrawGui(World *world, Camera *camera)
 	glutBitmapString(versionFont, (unsigned char*)versionStr);
 
 	glPopMatrix();
+}
+
+static void updateVbo(World *world, Camera *camera)
+{
+	// update vertexMem
+	vertexMemNext = vertexMem;
+	vertices = 0;
+	vertexMemEntryCount = 0;
+
+	world->cookie++;
+	Bubble *startBubble = worldGetBubble(world, camera->pos);
+	if (startBubble)
+		findBubbles(world, camera, startBubble);
+
+	worldAfterFrame(world);
+
+	if (world->bubblesUpdated == 0) {
+		vboUpdate = 0;
+		vboUpdateFinished = 1;
+	}
 }
 
 void worldrenderInit(World *world, Camera *camera)
@@ -446,7 +476,7 @@ void worldrenderInit(World *world, Camera *camera)
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_NORMAL_ARRAY);
 
-//	vertexMem = knalloc(VBO_MAX_ENTRIES * sizeof(struct vertexData));
+	vertexMem = knalloc(VBO_MAX_ENTRIES * sizeof(struct vertexData));
 	indexMem = knalloc(VBO_MAX_ENTRIES * sizeof(unsigned int));
 
 	int i;
@@ -465,6 +495,17 @@ void worldrenderInit(World *world, Camera *camera)
 	glTexCoordPointer(2, GL_FLOAT, sizeof(struct vertexData), (GLvoid*) 12);
 	glNormalPointer(GL_BYTE, sizeof(struct vertexData), (GLvoid*) 20);
 
+	int tmp = world->maxBubblesToUpdate;
+	world->maxBubblesToUpdate = 0;
+	vboUpdate = 1;
+	while (vboUpdate) {
+		updateVbo(world, camera);
+		printf(".");
+		fflush(stdout);
+	}
+	printf("\n");
+	world->maxBubblesToUpdate = tmp;
+
 	timer = startTimer();
 }
 
@@ -474,7 +515,7 @@ void worldrenderReshape(World *world, Camera *camera, int w, int h)
 
 	// on projection matrix:
 	glLoadIdentity();
-	gluPerspective(45, (double)w/h, 1, 200);
+	gluPerspective(45, (double)w/h, 0.2, 500);
 
 	// calculate position for version string
 	versionPos = (Vector2f){
@@ -496,20 +537,21 @@ void worldrenderDraw(World *world, Camera *camera)
 //	glFinish();
 	gui = stopTimer(timer);
 
-//	glutSwapBuffers();
+	glutSwapBuffers();
 //	glFinish();
 	draw = stopTimer(timer);
 
-	worldAfterFrame(world);
+	if (vboUpdate)
+		updateVbo(world, camera);
 //	glFinish();
 	update = stopTimer(timer);
 
 	// hold constant framerate
-	long timeleft = FRAMETIME - update;
-	if (timeleft > 0) {
+//	long timeleft = FRAMETIME - update;
+//	if (timeleft > 0) {
 //		usleep(timeleft);
-	}
-	glutSwapBuffers();
+//	}
+//	glutSwapBuffers();
 	glFinish();
 	sleep = stopTimer(timer);
 
@@ -517,8 +559,8 @@ void worldrenderDraw(World *world, Camera *camera)
 	timer = startTimer();
 
 	// print statistics
-//	printf("frame: %i %5li %5li %5li %5li %5li %5li\n", vertices,
-//			pre, scene, gui, draw, update, sleep);
+	printf("frame: %i %5li %5li %5li %5li %5li %5li\n", vertices,
+			pre, scene, gui, draw, update, sleep);
 	fflush(stdout);
 }
 

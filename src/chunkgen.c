@@ -463,7 +463,7 @@ void chunkgenCreate(World *world, Vector3i low) {
 //			total,
 //			blockcount,
 //			(int)((float)total / blockcount * 100));
-	VECPRINT(low, "\n");
+//	VECPRINT(low, "\n");
 
 	return;
 }

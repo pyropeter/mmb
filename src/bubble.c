@@ -137,14 +137,14 @@ void bubbleSplit(World *world, Chunk *chunk)
 			assert((*otherChunk)->blocks == NULL);
 			
 			bubbleGen(world, *otherChunk);
-//			bubbleUpdate(world, (*otherChunk)->bubble);
+			bubbleUpdate(world, (*otherChunk)->bubble);
 		}
 	}
 
 	Bubble **otherBubble;
 	LISTITER(old->adjacent, otherBubble, Bubble**) {
 		(*otherBubble)->status = 0;
-//		bubbleUpdate(world, *otherBubble);
+		bubbleUpdate(world, *otherBubble);
 	}
 
 	bubbleFree(old);

@@ -31,12 +31,12 @@ World * worldInit(Block *(*gen)(Vector3i))
 	world->chunksToUpdate = listNew();
 
 	world->bubblesUpdated = 0;
-	world->maxBubblesToUpdate = 50;
+	world->maxBubblesToUpdate = 2;
 	world->bubblesToUpdate = listNew();
 
 	// chunkgen
 	world->chunkGroups = listNew(sizeof(ChunkGroup*));
-	world->groupSize = (Vector3i){8, 8, 8};
+	world->groupSize = (Vector3i){16, 8, 16};
 	chunkgenInit(world);
 
 	return world;
@@ -211,13 +211,6 @@ void worldAfterFrame(World *world)
 
 	LISTITER(world->bubblesToUpdate, bubble, Bubble**) {
 		int missing = (*bubble)->edge & (*bubble)->chunkGroup->status;
-
-		if (missing == 0) {
-			if ((*bubble)->status == 0)
-				bubbleUpdate(world, *bubble);
-
-			continue;
-		}
 
 #ifdef MMB_DEBUG_CHUNK
 		printf("Updating bubble %p, missing %i\n",
