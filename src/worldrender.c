@@ -431,7 +431,7 @@ void worldrenderInit(World *world, Camera *camera)
 	}
 	printf("glew: %s\n", glewGetString(GLEW_VERSION));
 
-	if (asprintf(&versionStr, "MMB \"%s\" %s", CODENAME, VERSION) == -1) {
+	if (asprintf(&versionStr, "MMB %s \"%s\"", VERSION, CODENAME) == -1) {
 		fprintf(stderr, "Out of memory.\n");
 		exit(EXIT_FAILURE);
 	}

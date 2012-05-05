@@ -2,15 +2,17 @@ SHELL = /bin/sh
 .SUFFIXES:
 .SUFFIXES: .c .o
 
-CODENAME = "Textured and lit cubes"
-DVERSION = v0.4
-VERSION := $(shell git describe --tags --long --dirty 2>/dev/null \
-		|| echo "$(DVERSION)")
+CODENAME = "Looks good as long as you don't move"
+DVERSION = "v0.4.1"
+VERSION := "$(shell git describe --tags --long --dirty 2>/dev/null \
+		|| echo $(DVERSION))"
 
 CC = gcc
 CFLAGS = -Wall -g -pg
-ALL_CFLAGS = -DVERSION='"$(VERSION)"' -DCODENAME='$(CODENAME)' $(CFLAGS)
 LIBS = -lGL -lGLU -lGLEW -lglut -lSOIL -lm -lrt
+ALL_CFLAGS = $(CFLAGS)
+ALL_CFLAGS += -DVERSION="$(subst ",\",$(subst \,\\,$(VERSION)))"
+ALL_CFLAGS += -DCODENAME="$(subst ",\",$(subst \,\\,$(CODENAME)))"
 
 # for stable releases
 # * disable symbols?
