@@ -129,6 +129,8 @@ long stopTimer(long start) {
  * future if anyone actually needs to divide by a negative number)
  */
 int divRoundDown(int numerator, int denominator) {
+	assert(denominator > 0);
+
 	if (numerator < 0)
 		return (numerator - denominator + 1) / denominator;
 	else
