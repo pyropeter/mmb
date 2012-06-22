@@ -16,7 +16,7 @@ static Render render;
 
 // =====================================================================
 
-void moveCamera(double dx, double dy, double dz) {
+static void moveCamera(double dx, double dy, double dz) {
 	render.camera.x += dx;
 	render.camera.y += dy;
 	render.camera.z += dz;
@@ -31,7 +31,7 @@ void moveCamera(double dx, double dy, double dz) {
 	render.camera.high.z = render.camera.pos.z + render.camera.range;
 }
 
-void rotateCamera(float dax, float day) {
+static void rotateCamera(float dax, float day) {
 	/* 
 	 * Adds dax and day to the current camera rotation.
 	 * 
@@ -66,7 +66,7 @@ void renderDebug() {
 	printf("===== END =====\n");
 }
 
-void onPassiveMotion(int x, int y) {
+static void onPassiveMotion(int x, int y) {
 	int cx = glutGet(GLUT_WINDOW_WIDTH) / 2;
 	int cy = glutGet(GLUT_WINDOW_HEIGHT) / 2;
 	int dx = x - cx;
@@ -82,10 +82,10 @@ void onPassiveMotion(int x, int y) {
 	glutPostRedisplay();
 }
 
-void renderOnMouse(int button, int state, int x, int y);
-void renderOnMouseHook(int button, int state, int x, int y);
+static void renderOnMouse(int button, int state, int x, int y);
+static void renderOnMouseHook(int button, int state, int x, int y);
 
-void catchPointer() {
+static void catchPointer() {
 	glutSetCursor(GLUT_CURSOR_NONE);
 	int cx = glutGet(GLUT_WINDOW_WIDTH) / 2;
 	int cy = glutGet(GLUT_WINDOW_HEIGHT) / 2;
@@ -94,13 +94,13 @@ void catchPointer() {
 	glutMouseFunc(&renderOnMouseHook);
 }
 
-void freePointer() {
+static void freePointer() {
 	glutSetCursor(GLUT_CURSOR_INHERIT);
 	glutPassiveMotionFunc(NULL);
 	glutMouseFunc(&renderOnMouse);
 }
 
-void onKeyboard(unsigned char key, int x, int y) {
+static void onKeyboard(unsigned char key, int x, int y) {
 	switch (key) {
 		case 'w':
 			moveCamera(render.camera.dx, 0, render.camera.dz);
@@ -157,7 +157,7 @@ void renderOnMouseHook(int button, int state, int x, int y) {
 		render.onMouse(button, state, render.onMouseData);
 }
 
-void onIdle() {
+static void onIdle() {
 	glutPostRedisplay();
 }
 

@@ -42,7 +42,7 @@ World * worldInit(Block *(*gen)(Vector3i))
 	return world;
 }
 
-Chunk * searchAllChunks(World *world, Vector3i pos)
+static Chunk * searchAllChunks(World *world, Vector3i pos)
 {
 	Chunk **chunk;
 	LISTITER(world->chunks, chunk, Chunk**) {

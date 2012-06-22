@@ -7,7 +7,7 @@
 #include "bubble.h"
 #include "world.h"
 
-Bubble * bubbleNew(World *world, Chunk *chunk)
+static Bubble * bubbleNew(World *world, Chunk *chunk)
 {
 	Bubble *bubble = knalloc(sizeof(Bubble));
 
@@ -22,13 +22,13 @@ Bubble * bubbleNew(World *world, Chunk *chunk)
 	return bubble;
 }
 
-void bubbleFree(Bubble *bubble)
+static void bubbleFree(Bubble *bubble)
 {
 	listFree(bubble->adjacent);
 	free(bubble);
 }
 
-void bubbleGenRecurse(World *world, Vector3i low, Vector3i high,
+static void bubbleGenRecurse(World *world, Vector3i low, Vector3i high,
 		Bubble *bubble, Chunk *chunk)
 {
 	chunk->bubble = bubble;

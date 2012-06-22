@@ -19,7 +19,7 @@ typedef struct AnnotatedBlock {
  * 
  * This also adds the Chunk to the world's list of chunks.
  */
-Chunk *newChunk(World *world) {
+static Chunk *newChunk(World *world) {
 	//
 	// REMEMBER: 2nd initialisation in chunksplit.c
 	// All changes here must probably be done there, too.
@@ -43,7 +43,7 @@ Chunk *newChunk(World *world) {
  * 
  * This also adds the ChunkGroup to the world's list of ChunkGroups.
  */
-ChunkGroup *newChunkGroup(World *world, Vector3i low) {
+static ChunkGroup *newChunkGroup(World *world, Vector3i low) {
 	ChunkGroup *chunkGroup = knalloc(sizeof(ChunkGroup));
 
 	chunkGroup->low = low;
@@ -64,7 +64,7 @@ ChunkGroup *newChunkGroup(World *world, Vector3i low) {
  * 
  * This also adds references to the chunk in the corresponding AnnotatedBlocks.
  */
-void addBlocksToChunk(AnnotatedBlock *blocks, Vector3i size, int z,
+static void addBlocksToChunk(AnnotatedBlock *blocks, Vector3i size, int z,
 		Vector2i low, Vector2i high, Chunk *chunk)
 {
 	AnnotatedBlock *block;
@@ -90,7 +90,7 @@ void addBlocksToChunk(AnnotatedBlock *blocks, Vector3i size, int z,
 /**
  * Creates a new Chunk, adds Blocks to it, and merges the Chunk with the others
  */
-void handleChunk(World *world, AnnotatedBlock *blocks,
+static void handleChunk(World *world, AnnotatedBlock *blocks,
 		ChunkGroup *chunkGroup, Vector3i size,
 		Vector3i low, int z, AnnotatedBlock *first)
 {
@@ -179,7 +179,7 @@ void handleChunk(World *world, AnnotatedBlock *blocks,
 	}
 }
 
-void mergeGroup(World *world, AnnotatedBlock *blocks, Vector3i batchLow,
+static void mergeGroup(World *world, AnnotatedBlock *blocks, Vector3i batchLow,
 		Vector3i size, List *chunks, int dir) {
 	Vector3i p, low, high;
 	Chunk **chunk;
@@ -221,7 +221,7 @@ void mergeGroup(World *world, AnnotatedBlock *blocks, Vector3i batchLow,
 	}
 }
 
-void setDistances(AnnotatedBlock *blocks, Vector3i size) {
+static void setDistances(AnnotatedBlock *blocks, Vector3i size) {
 	AnnotatedBlock *tmp, *tmpX, *tmpY;
 	int x, y, z;
 

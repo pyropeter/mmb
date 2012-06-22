@@ -6,7 +6,7 @@
 #include "defs.h"
 #include "chunksplit.h"
 
-void moveBlocks(Chunk *old, Chunk *new)
+static void moveBlocks(Chunk *old, Chunk *new)
 {
 	if (old->blocks == NULL) {
 		new->blocks = NULL;
@@ -37,7 +37,7 @@ void moveBlocks(Chunk *old, Chunk *new)
 }
 
 #define UPDATEADJACENT(plane, x) \
-void updateAdjacent ## plane(Chunk *old, Chunk *one, Chunk *two) \
+static void updateAdjacent ## plane(Chunk *old, Chunk *one, Chunk *two) \
 { \
 	Chunk **chunk; \
  \
@@ -65,8 +65,10 @@ void updateAdjacent ## plane(Chunk *old, Chunk *one, Chunk *two) \
 UPDATEADJACENT(YZ, x)
 UPDATEADJACENT(XZ, y)
 UPDATEADJACENT(XY, z)
+#undef UPDATEADJACENT
 
-void updateWorldChunks(World *world, Chunk *chunk, Chunk *one, Chunk *two)
+static void updateWorldChunks(World *world, Chunk *chunk,
+		Chunk *one, Chunk *two)
 {
 	// replace the pointer to the old chunk with a pointer to the first
 	// new chunk:
@@ -76,7 +78,7 @@ void updateWorldChunks(World *world, Chunk *chunk, Chunk *one, Chunk *two)
 	listInsert(world->chunks, two);
 }
 
-void updateWorldGetChunk(World *world, Chunk *chunk, Chunk *one)
+static void updateWorldGetChunk(World *world, Chunk *chunk, Chunk *one)
 {
 	if (world->lastChunk == chunk) {
 		world->lastChunk = one;
@@ -84,7 +86,7 @@ void updateWorldGetChunk(World *world, Chunk *chunk, Chunk *one)
 	}
 }
 
-void updateChunkGroup(World *world, ChunkGroup *group,
+static void updateChunkGroup(World *world, ChunkGroup *group,
 		Chunk *chunk, Chunk *one, Chunk *two)
 {
 	Vector3i low = group->low;
@@ -114,9 +116,10 @@ void updateChunkGroup(World *world, ChunkGroup *group,
 	UPDATECHUNKGROUPCHECK(XG, high.x)
 	UPDATECHUNKGROUPCHECK(YG, high.y)
 	UPDATECHUNKGROUPCHECK(ZG, high.z)
+#undef UPDATECHUNKGROUPCHECK
 }
 
-void updateWorldChunkGroups(World *world,
+static void updateWorldChunkGroups(World *world,
 		Chunk *chunk, Chunk *one, Chunk *two)
 {
 	ChunkGroup **group;

@@ -4,7 +4,7 @@
 
 #include "raytrace.h"
 
-void getFace(Ray *r)
+static void getFace(Ray *r)
 {
 	float diff, factor;
 

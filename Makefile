@@ -53,7 +53,7 @@ doc/graph/graph.dot: $(SRCS) $(HEADERS)
 doc/graph/graph.png: doc/graph/graph.dot
 	dot -Tpng doc/graph/graph.dot > $@
 
-doc/doxygen/cookie: $(SRCS) $(HEADERS)
+doc/doxygen/cookie: doc/doxygen/Doxyfile $(SRCS) $(HEADERS)
 	doxygen doc/doxygen/Doxyfile
 	touch $@
 

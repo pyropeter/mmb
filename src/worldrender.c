@@ -61,13 +61,13 @@ static GLuint terrainId;
  *
  * */
 
-Vector4f convertTexCoords(Vector2i coord)
+static Vector4f convertTexCoords(Vector2i coord)
 {
 	return (Vector4f){0.0625 * coord.x, 0.0625 * coord.y,
 			0.0625 * (coord.x + 1), 0.0625 * (coord.y + 1)};
 }
 
-void blockDrawFace(Block *block, int x, int y, int z, int dir) {
+static void blockDrawFace(Block *block, int x, int y, int z, int dir) {
 	if (block->solid == 0)
 		return;
 
@@ -121,7 +121,7 @@ void blockDrawFace(Block *block, int x, int y, int z, int dir) {
 }
 
 //! draw chunk's bounding rectangle as wireframe
-void drawChunkBorder(Chunk *chunk) {
+static void drawChunkBorder(Chunk *chunk) {
 	int x1 = (long long int)chunk->low.x;
 	int y1 = (long long int)chunk->low.y;
 	int z1 = (long long int)chunk->low.z;
@@ -160,7 +160,7 @@ void drawChunkBorder(Chunk *chunk) {
 }
 
 //! draw block's bounding rectangle as wireframe
-void drawBlockBorder(Vector3i pos) {
+static void drawBlockBorder(Vector3i pos) {
 	glPushMatrix();
 	glTranslatef(pos.x, pos.y, pos.z);
 	glScalef(1.2, 1.2, 1.2);
@@ -198,7 +198,7 @@ void drawBlockBorder(Vector3i pos) {
 	glPopMatrix();
 }
 
-void drawAdjacentChunk(Camera *camera, Chunk *chunk, Chunk *other) {
+static void drawAdjacentChunk(Camera *camera, Chunk *chunk, Chunk *other) {
 	Block **block = other->blocks;
 	int x, y, z;
 
@@ -233,7 +233,7 @@ void drawAdjacentChunk(Camera *camera, Chunk *chunk, Chunk *other) {
 #undef LOOP
 }
 
-int isVisible(Camera *camera, Chunk *chunk) {
+static int isVisible(Camera *camera, Chunk *chunk) {
 	if(chunk->low.x > camera->high.x
 	|| chunk->low.y > camera->high.y
 	|| chunk->low.z > camera->high.z
@@ -244,7 +244,7 @@ int isVisible(Camera *camera, Chunk *chunk) {
 	return 1;
 }
 
-void renderBubbleChunk(World *world, Camera *camera,
+static void renderBubbleChunk(World *world, Camera *camera,
 		Bubble *bubble, Chunk *chunk)
 {
 	chunk->cookie = world->cookie;
@@ -264,7 +264,7 @@ void renderBubbleChunk(World *world, Camera *camera,
 	}
 }
 
-void findBubbles(World *world, Camera *camera, Bubble *bubble)
+static void findBubbles(World *world, Camera *camera, Bubble *bubble)
 {
 	bubble->cookie = world->cookie;
 	worldUpdateBubble(world, bubble);
@@ -283,7 +283,7 @@ void findBubbles(World *world, Camera *camera, Bubble *bubble)
 	}
 }
 
-void hilightSelection(World *world, Camera *camera) {
+static void hilightSelection(World *world, Camera *camera) {
 	// we will abuse chunkGet() => save its state
 	Chunk *lastChunk = world->lastChunk;
 	Vector3i lastPos = world->lastPos;
@@ -315,7 +315,7 @@ void hilightSelection(World *world, Camera *camera) {
 	world->lastPos = lastPos;
 }
 
-void debugSomeStuff(World *world, Camera *camera) {
+static void debugSomeStuff(World *world, Camera *camera) {
 	Chunk *chunk = debugChunk;
 	Chunk **other;
 	LISTITER(chunk->adjacent, other, Chunk**) {
@@ -323,7 +323,7 @@ void debugSomeStuff(World *world, Camera *camera) {
 	}
 }
 
-void worldrenderDrawSzene(World *world, Camera *camera)
+static void worldrenderDrawSzene(World *world, Camera *camera)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -383,7 +383,7 @@ void worldrenderDrawSzene(World *world, Camera *camera)
 	glDisable(GL_DEPTH_TEST);
 }
 
-void worldrenderDrawGui(World *world, Camera *camera)
+static void worldrenderDrawGui(World *world, Camera *camera)
 {
 	// on projection matrix:
 	glPushMatrix();
