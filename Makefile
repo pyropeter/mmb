@@ -62,23 +62,25 @@ gmcraft_terrain.png:
 
 # DO NOT DELETE THIS LINE -- make depend needs it
 
-src/chunksplit.o: src/defs.h src/chunksplit.h src/vector.h
-src/chunksplit.o: src/world.h src/chunk.h src/block.h
-src/chunkgen.o: src/defs.h src/chunkgen.h src/vector.h src/world.h
-src/chunkgen.o: src/chunk.h src/block.h
-src/generator.o: src/defs.h src/vector.h src/generator.h src/block.h
-src/block.o: src/block.h src/vector.h
 src/worldrender.o: src/defs.h src/vector.h src/worldrender.h
 src/worldrender.o: src/render.h src/world.h src/chunk.h src/block.h
 src/worldrender.o: src/raytrace.h
+src/render.o: src/render.h src/defs.h src/vector.h
+src/chunksplit.o: src/defs.h src/chunksplit.h src/vector.h
+src/chunksplit.o: src/world.h src/chunk.h src/block.h
+src/world.o: src/defs.h src/vector.h src/world.h src/chunk.h
+src/world.o: src/block.h src/chunkgen.h src/chunksplit.h src/bubble.h
+src/simplex.o: src/cmwc.h src/simplex.h src/defs.h
 src/defs.o: src/defs.h
+src/chunkgen.o: src/defs.h src/chunkgen.h src/vector.h src/world.h
+src/chunkgen.o: src/chunk.h src/block.h
+src/generator.o: src/defs.h src/vector.h src/generator.h src/block.h
+src/cmwc.o: src/cmwc.h
+src/raytrace.o: src/raytrace.h src/vector.h src/world.h src/defs.h
+src/raytrace.o: src/chunk.h src/block.h
 src/main.o: src/defs.h src/vector.h src/render.h src/generator.h
 src/main.o: src/block.h src/world.h src/chunk.h src/worldrender.h
 src/main.o: src/raytrace.h
-src/world.o: src/defs.h src/vector.h src/world.h src/chunk.h
-src/world.o: src/block.h src/chunkgen.h src/chunksplit.h src/bubble.h
-src/render.o: src/render.h src/defs.h src/vector.h
+src/block.o: src/block.h src/vector.h
 src/bubble.o: src/defs.h src/bubble.h src/vector.h src/world.h
 src/bubble.o: src/chunk.h src/block.h
-src/raytrace.o: src/raytrace.h src/vector.h src/world.h src/defs.h
-src/raytrace.o: src/chunk.h src/block.h
