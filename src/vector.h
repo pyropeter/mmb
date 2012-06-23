@@ -15,6 +15,11 @@ typedef struct Vector4f {
 	float x, y, z, w;
 } Vector4f;
 
+//! 4D vector with double members x,y,z,w
+typedef struct Vector4d {
+	double x, y, z, w;
+} Vector4d;
+
 //! 3D vector with int members x,y,z
 typedef struct Vector3i {
 	int x, y, z;
@@ -24,6 +29,11 @@ typedef struct Vector3i {
 typedef struct Vector3f {
 	float x, y, z;
 } Vector3f;
+
+//! 3D vector with double members x,y,z
+typedef struct Vector3d {
+	double x, y, z;
+} Vector3d;
 
 //! 2D vector with int members x,y
 typedef struct Vector2i {
@@ -35,6 +45,12 @@ typedef struct Vector2f {
 	float x, y;
 } Vector2f;
 
+//! 2D vector with double members x,y
+typedef struct Vector2d {
+	double x, y;
+} Vector2d;
+
+#define VEC4CMP(a,o,b) (a.x o b.x && a.y o b.y && a.z o b.z && a.w o b.w)
 #define VEC3CMP(a,o,b) (a.x o b.x && a.y o b.y && a.z o b.z)
 #define VEC2CMP(a,o,b) (a.x o b.x && a.y o b.y)
 
