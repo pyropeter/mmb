@@ -117,33 +117,3 @@ double simplex2D(SimplexState *state, double xin, double yin) {
 
 	return 70.0 * (n0 + n1 + n2);
 }
-
-/*int main(int argc, char** argv) {
-	struct SimplexState heul = {perm[512], permMod12[512]};
-
-	cmwcInit(atoi(argv[1]));
-	int *p = simplexInit();
-
-	int i;
-	for(i = 0 ; i < 512 ; i++) {
-		heul.perm[i] = p[i & 255];
-		heul.permMod12[i] = heul.perm[i] % 12;
-	}
-
-	int height = 400;
-	int width = 400;
-	double scale = 500.0;
-
-	printf("P2\n");
-	printf("%i %i ", height, width);
-	printf("255\n");
-	int x, y;
-	for(x=0 ; x<height ; x++) {
-		for(y=0 ; y<width ; y++) {
-			printf("%i ", (int)(simplex2D(heul, x/scale,y/scale)*127+127));
-		}
-		printf("\n");
-	}
-
-	return 0;
-}*/
