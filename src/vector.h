@@ -54,11 +54,18 @@ typedef struct Vector2d {
 #define VEC3CMP(a,o,b) (a.x o b.x && a.y o b.y && a.z o b.z)
 #define VEC2CMP(a,o,b) (a.x o b.x && a.y o b.y)
 
+#define VEC4IOP(a,o,b) ((Vector4i){a.x o b.x, a.y o b.y, a.z o b.z, a.w o b.w})
+#define VEC4FOP(a,o,b) ((Vector4f){a.x o b.x, a.y o b.y, a.z o b.z, a.w o b.w})
+#define VEC4DOP(a,o,b) ((Vector4d){a.x o b.x, a.y o b.y, a.z o b.z, a.w o b.w})
 #define VEC3IOP(a,o,b) ((Vector3i){a.x o b.x, a.y o b.y, a.z o b.z})
 #define VEC3FOP(a,o,b) ((Vector3f){a.x o b.x, a.y o b.y, a.z o b.z})
+#define VEC3DOP(a,o,b) ((Vector3d){a.x o b.x, a.y o b.y, a.z o b.z})
 #define VEC2IOP(a,o,b) ((Vector2i){a.x o b.x, a.y o b.y})
+#define VEC2FOP(a,o,b) ((Vector2f){a.x o b.x, a.y o b.y})
+#define VEC2DOP(a,o,b) ((Vector2d){a.x o b.x, a.y o b.y})
 
 #define VECPRINT(v, tail) printf("%i/%i/%i%s", v.x,v.y,v.z, tail);
 #define VECFPRINT(v, tail) printf("%1.1f/%1.1f/%1.1f%s", v.x,v.y,v.z, tail);
+#define VECDPRINT(v, tail) printf("%1.1f/%1.1f/%1.1f%s", v.x,v.y,v.z, tail);
 
 #endif /* _MMB_VECTOR_H */
