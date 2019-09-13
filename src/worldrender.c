@@ -7,8 +7,8 @@
 #include <assert.h>
 
 #include <GL/glew.h>
-#include "GL/freeglut.h"
-#include "SOIL.h"
+#include <GL/freeglut.h>
+#include <SOIL/SOIL.h>
 
 #include "defs.h"
 #include "vector.h"
